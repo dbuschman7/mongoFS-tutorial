@@ -1,0 +1,38 @@
+@(title: String, activeTab:String )(content: Html)
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>@title</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="/assets/stylesheets/theme.css" rel="stylesheet" media="screen">
+	<style>
+		body {
+			padding-top:70px;
+		}
+		.nowrap { 
+			white-space: nowrap;
+		}
+		.highlightLabel { 
+			padding : 2px 2px 2px 2px;
+		}
+	</style>
+	
+</head>
+
+<body ng-app="tutorial"> 
+
+
+		
+@content
+
+<script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular.min.js"))"></script>
+<script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular-route.min.js"))"></script>
+<script src="@routes.WebJarAssets.at(WebJarAssets.locate("jquery.min.js"))"></script>
+<script src="@routes.WebJarAssets.at(WebJarAssets.locate("bootstrap.min.js"))"></script>
+
+</body>
+</html>	
+		
