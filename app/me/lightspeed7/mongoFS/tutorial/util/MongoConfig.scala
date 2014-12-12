@@ -7,11 +7,14 @@ import com.mongodb.MongoClient
 import me.lightspeed7.mongofs.MongoFileStoreConfig
 import me.lightspeed7.mongofs.util.ChunkSize
 import com.mongodb.WriteConcern
+import me.lightspeed7.mongofs.crypto.BasicCrypto
 
 object MongoConfig {
 
   var db: DB = _
-  var store: MongoFileStore = _
+  lazy val images: MongoFileStore = buildStore("images", ChunkSize.medium_128K)
+  lazy val medium: MongoFileStore = buildStore("medium", ChunkSize.small_64K)
+  lazy val thumbs: MongoFileStore = buildStore("thumbs", ChunkSize.small_32K)
 
   def init(hostUrl: String) = {
 
@@ -21,15 +24,20 @@ object MongoConfig {
     db = client.getDB(uri.getDatabase());
     println("Mongo Connection - ready!")
 
-    val config = MongoFileStoreConfig.builder().bucket("test") //
+  }
+
+  def buildStore(bucketName: String, chunkSize: ChunkSize = ChunkSize.small_64K): MongoFileStore = {
+    val config = MongoFileStoreConfig.builder().bucket(bucketName) //
       .enableCompression(true) //
+      .enableEncryption(new BasicCrypto()) // 
       .asyncDeletes(true) //
-      .chunkSize(ChunkSize.small_64K) //
+      .chunkSize(chunkSize) //
       .writeConcern(WriteConcern.ACKNOWLEDGED) //
       .build();
 
-    store = new MongoFileStore(db, config)
-  }
+    new MongoFileStore(db, config)
 
+  }
 }
 
+class MongoConfig
