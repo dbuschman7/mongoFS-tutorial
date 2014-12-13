@@ -1,4 +1,4 @@
-package utils
+package me.lightspeed7.mongoFS.tutorial.util
 
 import me.lightspeed7.mongofs.MongoFileStore
 import com.mongodb.DB
@@ -8,20 +8,27 @@ import me.lightspeed7.mongofs.MongoFileStoreConfig
 import me.lightspeed7.mongofs.util.ChunkSize
 import com.mongodb.WriteConcern
 import me.lightspeed7.mongofs.crypto.BasicCrypto
+import org.mongodb.MongoCollection
+import com.mongodb.DBCollection
+import org.mongodb.MongoDatabase
+import org.mongodb.MongoCollectionOptions
+import com.mongodb.ReadPreference
+import org.mongodb.Document
 
 object MongoConfig {
 
-  var db: DB = _
-  lazy val images: MongoFileStore = buildStore("images", ChunkSize.medium_128K)
-  lazy val medium: MongoFileStore = buildStore("medium", ChunkSize.small_64K)
-  lazy val thumbs: MongoFileStore = buildStore("thumbs", ChunkSize.small_32K)
+  var db: MongoDatabase = _
+  val baseName = "images"
+
+  lazy val imageFS: MongoFileStore = buildStore(baseName, ChunkSize.medium_128K)
+  lazy val images: MongoCollection[Document] = buildCollection(baseName)
 
   def init(hostUrl: String) = {
 
     println("Mongo Connection - standing up ...")
     val uri = new MongoClientURI(hostUrl)
     val client = new MongoClient(uri);
-    db = client.getDB(uri.getDatabase());
+    db = new MongoDatabase(client.getDB(uri.getDatabase()));
     println("Mongo Connection - ready!")
 
   }
@@ -37,6 +44,13 @@ object MongoConfig {
 
     new MongoFileStore(db, config)
 
+  }
+
+  def buildCollection(bucketName: String): MongoCollection[Document] = {
+
+    db.getCollection("images", //
+      MongoCollectionOptions.builder().writeConcern(WriteConcern.ACKNOWLEDGED)
+        .readPreference(ReadPreference.primary()).build())
   }
 }
 

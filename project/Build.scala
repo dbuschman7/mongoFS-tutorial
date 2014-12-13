@@ -24,8 +24,8 @@ object ApplicationBuild extends Build {
   val appVersion = s"$major.$minor.$patch-$commit"
 
   scalaVersion := "2.11.1"
-  
-//  val theScalaVersion = scala.util.Properties.versionString.substring(8)
+
+  //  val theScalaVersion = scala.util.Properties.versionString.substring(8)
 
   println()
   println(s"App Name      => ${appName}")
@@ -39,6 +39,11 @@ object ApplicationBuild extends Build {
     "-language:implicitConversions", "-language:postfixOps", "-language:dynamics", "-language:higherKinds",
     "-language:existentials", "-language:experimental.macros", "-Xmax-classfile-name", "140")
 
+  implicit def dependencyFilterer(deps: Seq[ModuleID]) = new Object {
+    def excluding(group: String, artifactId: String) =
+      deps.map(_.exclude(group, artifactId))
+  }
+
   val appDependencies = Seq(
     "commons-io" % "commons-io" % "2.4",
     "org.webjars" %% "webjars-play" % "2.3.0" withSources (),
@@ -47,8 +52,13 @@ object ApplicationBuild extends Build {
     //    "org.webjars" % "d3js" % "3.4.11",
     "org.mongodb" % "mongo-java-driver" % "2.12.4",
     "me.lightspeed7" % "mongoFS" % "0.9.0",
-    "com.github.athieriot" %% "specs2-embedmongo" % "0.7.0"
-    )
+    "com.github.athieriot" %% "specs2-embedmongo" % "0.7.0",
+    "org.imgscalr" % "imgscalr-lib" % "4.2",
+    "commons-lang" % "commons-lang" % "2.6",
+    //
+    "org.scalatestplus" %% "play" % "1.1.0" % "test",
+    "com.novocode" % "junit-interface" % "0.11" % "test")
+
 
   val root = Project("tutorial", file("."))
     .enablePlugins(play.PlayScala)
