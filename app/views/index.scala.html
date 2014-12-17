@@ -1,52 +1,54 @@
-@layout(title = "Home", activeTab = "home") {
-
-
+@(uuid: String) @layout(title = "Home", activeTab = "home") {
 
 <section>
-	<div class="row" ng-controller="ImageController">
-		<div
-			class="col-xs-12 col-sm-10 col-sm-offset-1 col-md-offset-1 col-lg-offset-1">
-			<h3>Image Gallery Upload Tutorial</h3>
+	<div class="row" data-ng-controller="ImageController" data-ng-init="startSocket('@uuid')">
+		<div class="col-xs-12 col-sm-10 col-sm-offset-1 col-md-offset-1 col-lg-offset-1">
+			<div>
+				<div class="pull-right">{{serverTime}}</div>
+				<h3>Image Gallery Upload Tutorial</h3>
+			 </div>
+			
 			<div class="border container fill">
 				<div class="panel-body" id="aboutme">
 					<div class="pull-left col-xs-12 col-sm-9 border">
 						<h4>Gallery</h4>
 
 
-						<div ng-repeat="image in images" class="col-xs-2 " >
-							{{image.desc}}<br/>
-							<img class="img-thumbnail " height="150" width="150" src="{{image.src}}" alt="{{image.alt}}" title="{{image.desc}}"  />
+						<div data-ng-repeat="image in images" class="col-xs-2 ">
+							{{image.desc}}<br /> <img class="img-thumbnail " height="150"
+								width="150" src="{{image.src}}" alt="{{image.alt}}"
+								title="{{image.desc}}" />
 						</div>
 
-						
+
 					</div>
 					<div class="col-xs-12 col-sm-3 border">
 						<h4>Metrics</h4>
 						<ul class="list-group">
-							   <li class="list-group-item">Files<span class="badge active">{{fileCount | number:0}}</span></li>
-							   <li class="list-group-item">Size<span class="badge active">{{imageBytes | number:0}}</span></li>
-							   <li class="list-group-item">Storage<span class="badge active">{{storageBytes | number:0}}</span></li>
-							   <li class="list-group-item">Ratio<span class="badge active">{{ratio | number:2}}</span></li>
-							</ul>
-							
-							<hr/>
-							Encrypt: <input type="checkbox" ng-model="encrypted" >
-							<span class="pull-right" >Zip Expand: <input type="checkbox" ng-model="zipExpand" ></span>
-							<br/>
-							Compress: <input type="checkbox" ng-model="compressed" ><br/>
-							<br/>
-							File Upload Drop Box 
+							<li class="list-group-item">Files<span class="badge active">{{fileCount
+									| number:0}}</span></li>
+							<li class="list-group-item">Size<span class="badge active">{{imageBytes
+									| number:0}}</span></li>
+							<li class="list-group-item">Storage<span
+								class="badge active">{{storageBytes | number:0}}</span></li>
+							<li class="list-group-item">Ratio<span class="badge active">{{ratio
+									| number:2}}</span></li>
+						</ul>
+
+						<hr />
+						
+						File Upload Drop Box
 					</div>
 				</div>
 			</div>
 		</div>
+
 	</div>
 </section>
 
-
-}
-
 <script src="@routes.Assets.at("javascripts/app.js")"></script>
 <script src="@routes.Assets.at("javascripts/controllers.js")"></script>
+
+}
 
 

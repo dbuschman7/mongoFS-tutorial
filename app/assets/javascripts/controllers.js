@@ -37,10 +37,10 @@ angular.module('tutorial.controllers', [])
 					var target = raw.target;
 					var data = raw.data;
 					// console.log("Received data for " + target);
-					if (target == "searchResult") {
-						console.log("data");
-						$scope.searchResults.unshift(data);
-					} else if (target == "serverTick") {
+					if (target == "thumbnail") {
+						console.log("thumb");
+						$scope.images.unshift(data);
+					} else if (target == "serverTime") {
 						$scope.serverTime = data;
 					} else if (target == "statistics") {
 						$scope.data.shift();
@@ -75,16 +75,18 @@ angular.module('tutorial.controllers', [])
 				});
 			};
 
-			$scope.startSearching = function() {
-				$scope.stopSearching();
-				$scope.searchResults = [];
-				$scope.searchFeed = new EventSource("/search/" + $scope.searchString);
-				$scope.searchFeed.addEventListener("message", $scope.handleServerEvent, false);
+			$scope.startSocket = function(uuid) {
+				$scope.stopSocket();
+				$scope.images = [];
+				var url = "/sse/" + uuid 
+				console.log(url);
+				$scope.socket = new EventSource(url);
+				$scope.socket.addEventListener("message", $scope.handleServerEvent, false);
 			};
 
-			$scope.stopSearching = function() {
-				if (typeof $scope.searchFeed != 'undefined') {
-					$scope.searchFeed.close();
+			$scope.stopSocket = function() {
+				if (typeof $scope.socket != 'undefined') {
+					$scope.socket.close();
 				}
 			};
 		}

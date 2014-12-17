@@ -5,6 +5,10 @@ import play.libs.Akka
 import akka.actor.Props
 import org.slf4j.LoggerFactory
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
+import akka.actor.Actor
+import play.api.libs.iteratee.Concurrent
+
+import me.lightspeed7.mongoFS.tutorial._
 
 object Global extends GlobalSettings {
 
@@ -16,16 +20,12 @@ object Global extends GlobalSettings {
     println(MongoConfig.images.toString())
     println(MongoConfig.imageFS.toString())
 
-    // bring up akka actors
-        Akka.system.actorOf(Props[MediumThumbnail], "medium")
-        Akka.system.actorOf(Props[SmallThumbnail], "small")
-    //    Akka.system.actorOf(Props[LogEntryProducerActor], "logEntryProducer")
-        Akka.system.actorOf(Props[UserChannelsActor], "channels")
-    //    Akka.system.actorOf(Props[StatisticsActor], "statistics")
-    //    Akka.system.actorOf(Props[ServerTickActor], "serverTick")
+   
 
   }
-
+  
+  
+  
   override def onStop(app: Application) {
     //
   }
