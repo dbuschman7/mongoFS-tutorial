@@ -1,42 +1,41 @@
 package me.lightspeed7.mongoFS.tutorial.util
 
-import me.lightspeed7.mongofs.MongoFileStore
-import com.mongodb.DB
-import com.mongodb.MongoClientURI
-import com.mongodb.MongoClient
-import me.lightspeed7.mongofs.MongoFileStoreConfig
-import me.lightspeed7.mongofs.util.ChunkSize
-import com.mongodb.WriteConcern
-import me.lightspeed7.mongofs.crypto.BasicCrypto
-import org.mongodb.MongoCollection
-import com.mongodb.DBCollection
 import org.mongodb.MongoDatabase
-import org.mongodb.MongoCollectionOptions
-import com.mongodb.ReadPreference
-import org.mongodb.Document
+
+import com.mongodb.{ DBCollection, MongoClient, MongoClientURI, ReadPreference, WriteConcern }
+
+import me.lightspeed7.mongofs.{ MongoFileStore, MongoFileStoreConfig }
+import me.lightspeed7.mongofs.crypto.BasicCrypto
+import me.lightspeed7.mongofs.util.ChunkSize
+
+class MongoConfig
 
 object MongoConfig {
 
-  var db: MongoDatabase = _
   val baseName = "images"
+  var hostUrl: String = _
 
+  lazy val db: MongoDatabase = init()
   lazy val imageFS: MongoFileStore = buildStore(baseName, ChunkSize.medium_128K)
   lazy val images: DBCollection = buildCollection(baseName)
 
-  def init(hostUrl: String) = {
-
-    println("Mongo Connection - standing up ...")
-    val uri = new MongoClientURI(hostUrl)
-    val client = new MongoClient(uri);
-    db = new MongoDatabase(client.getDB(uri.getDatabase()));
-    println("Mongo Connection - ready!")
-
+  def setHostUrl(url: String) = {
+    this.hostUrl = url
   }
 
-  def buildStore(bucketName: String, chunkSize: ChunkSize = ChunkSize.small_64K): MongoFileStore = {
+  private[util] def init() = {
+    val uri = new MongoClientURI(hostUrl)
+    println("Mongo Connection - standing up ...")
+    val client = new MongoClient(uri);
+    val db = new MongoDatabase(client.getDB(uri.getDatabase()));
+    println("Mongo Connection - ready!")
+    db
+  }
+
+  private[util] def buildStore(bucketName: String, chunkSize: ChunkSize = ChunkSize.small_64K): MongoFileStore = {
     val config = MongoFileStoreConfig.builder().bucket(bucketName) //
       .enableCompression(true) //
-      .enableEncryption(new BasicCrypto()) // 
+      .enableEncryption(new BasicCrypto()) //
       .asyncDeletes(true) //
       .chunkSize(chunkSize) //
       .writeConcern(WriteConcern.ACKNOWLEDGED) //
@@ -46,14 +45,12 @@ object MongoConfig {
 
   }
 
-  def buildCollection(bucketName: String): DBCollection = {
+  private[util] def buildCollection(bucketName: String): DBCollection = {
 
-    val coll = db.getSurrogate.getCollection(baseName) 
+    val coll = db.getSurrogate.getCollection(baseName)
     coll.setReadPreference(ReadPreference.primaryPreferred())
     coll.setWriteConcern(WriteConcern.ACKNOWLEDGED);
     coll
-    
+
   }
 }
-
-class MongoConfig

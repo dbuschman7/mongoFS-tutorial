@@ -1,27 +1,21 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
-import play.api.libs.iteratee.Iteratee
-import java.util.UUID
 import java.io.OutputStream
-import me.lightspeed7.mongofs.MongoFileStore
-import me.lightspeed7.mongofs.MongoFileWriter
-import me.lightspeed7.mongofs.MongoFile
-import play.mvc.Http
-import play.api.http.MimeTypes
-import play.libs.Akka
-import akka.actor.Props
-import akka.actor.ActorRef
 import java.util.Date
-import scala.compat.Platform
-import akka.routing.RoundRobinRouter
-import org.slf4j._
+
 import scala.collection.mutable.ListBuffer
-import play.api.libs.json.Json
-import play.api.libs.concurrent.Execution.Implicits._
-import me.lightspeed7.mongofs.util.TimeMachine
+import scala.compat.Platform
+
+import org.slf4j.LoggerFactory
+
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
+import me.lightspeed7.mongofs.{ MongoFile, MongoFileWriter }
+import me.lightspeed7.mongofs.util.TimeMachine
+import play.api.http.MimeTypes
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.Iteratee
+import play.api.libs.json.Json
+import play.api.mvc.{ Action, BodyParsers, Controller, MultipartFormData }
 
 object MongoFS extends Controller {
 
@@ -52,7 +46,7 @@ object MongoFS extends Controller {
             request.body.files foreach {
               case MultipartFormData.FilePart(key, filename, contentType, file) =>
                 {
-                  // process the start time 
+                  // process the start time
                   val uploadStart: Long = file.get("start").toString().toLong
                   file.put("start", null) // clear it out
                   start = Math.min(start, uploadStart) // find the first file to upload
@@ -62,7 +56,7 @@ object MongoFS extends Controller {
                   val thisFile = File(file.getFilename(), file.getURL().getUrl().toString(),
                     file.getStorageLength(), file.getContentType(),
                     (Platform.currentTime - uploadStart) / 1000)
-                    
+
                   files += thisFile
                 }
             }

@@ -1,20 +1,17 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
-import akka.actor.Props
-import org.junit._
-import org.junit.Assert._
-import org.junit.runner.RunWith
 import java.io.File
-import java.io.FileInputStream
-import me.lightspeed7.mongoFS.tutorial._
-import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
-import org.scalatest.junit._
-import org.scalatestplus.play.PlaySpec
-import play.libs.Akka
+
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
-import scala.io.Source
-import akka.actor.ActorSystem
+
+import org.junit.{ Before, Ignore, Test }
+import org.junit.Assert.{ assertEquals, assertTrue }
+import org.scalatest.junit.AssertionsForJUnit
+import org.scalatestplus.play.PlaySpec
+
+import akka.actor.{ ActorSystem, Props, actorRef2Scala }
+import me.lightspeed7.mongoFS.tutorial.{ CreateImage, Thumbnailer }
+import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 
 class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
 
@@ -25,7 +22,7 @@ class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
     sb = new StringBuilder("ScalaTest is ")
     lb = new ListBuffer[String]
 
-    MongoConfig.init("mongodb://localhost:27017/playground")
+    MongoConfig.setHostUrl("mongodb://localhost:27017/playground")
 
   }
 

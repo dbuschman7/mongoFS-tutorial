@@ -1,62 +1,19 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
 import java.awt.image.BufferedImage
-import javax.imageio.ImageIO
-import me.lightspeed7.mongofs.MongoFile
-import me.lightspeed7.mongofs.MongoFileWriter
-import org.mongodb.Document
-import org.mongodb.MongoCollection
-import org.imgscalr._
-import org.imgscalr.Scalr._
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
+
 import scala.util.Try
-import me.lightspeed7.mongofs.MongoFileConstants
+
 import org.bson.types.ObjectId
-import org.bson.types.ObjectId
-import play.api.Logger
+import org.imgscalr.Scalr
+
+import com.mongodb.{ BasicDBObject, WriteConcern }
+
+import javax.imageio.ImageIO
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
+import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants, MongoFileWriter }
 import me.lightspeed7.mongofs.url.MongoFileUrl
-import akka.io.Tcp.WriteCommand
-import com.mongodb.WriteConcern
-import com.mongodb.BasicDBObject
-
-case class Image(
-  _id: Option[ObjectId],
-  imageUrl: String,
-  thumbUrl: Option[String],
-  mediumUrl: Option[String])
-
-object Image {
-
-  // JSON formatting
-  implicit val objectIdFormat: Format[ObjectId] = new Format[ObjectId] {
-
-    def reads(json: JsValue) = {
-      json match {
-        case jsString: JsString => {
-          if (ObjectId.isValid(jsString.value)) JsSuccess(new ObjectId(jsString.value))
-          else JsError("Invalid ObjectId")
-        }
-        case other => JsError("Can't parse json path as an ObjectId. Json content = " + other.toString())
-      }
-    }
-
-    def writes(oId: ObjectId): JsValue = {
-      JsString(oId.toString)
-    }
-
-  }
-  implicit val imageFmt = Json.format[Image]
-
-  def fields() = {
-    val fields = (Map[String, Any]() /: Image.getClass.getDeclaredFields) { (a, f) =>
-      f.setAccessible(true)
-      a + (f.getName -> f.get(this))
-    }
-  }
-
-}
+import play.api.Logger
 
 object ImageService {
 
@@ -66,7 +23,7 @@ object ImageService {
   def insert(file: MongoFile): Option[ObjectId] = {
     try {
       val obj = new BasicDBObject("_id", file.getId()).append("imageUrl", file.getURL.toString())
- 
+
       MongoConfig.images.save(obj)
       Some(file.getId)
     } catch {
@@ -80,7 +37,7 @@ object ImageService {
   def updateMediumUrl(id: ObjectId, mediumUrl: MongoFileUrl): Option[ObjectId] = {
     doUpdate( //
       new BasicDBObject(MongoFileConstants._id.name(), id), //
-      new BasicDBObject("$set", new BasicDBObject("mediumUrl", mediumUrl.toString())), //    
+      new BasicDBObject("$set", new BasicDBObject("mediumUrl", mediumUrl.toString())), //
       "updateMediumUrl")
   }
 
@@ -104,7 +61,7 @@ object ImageService {
     }
   }
 
-  // 
+  //
   // Thumbnail creation
   // //////////////////////////
   def createThumbnail(source: MongoFile, sink: MongoFileWriter, sideLength: Int) = {
@@ -126,4 +83,3 @@ object ImageService {
     writer.getMongoFile
   }
 }
-

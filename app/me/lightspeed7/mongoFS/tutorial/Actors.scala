@@ -1,29 +1,19 @@
 package me.lightspeed7.mongoFS.tutorial
 
-import akka.event.ActorEventBus
-import akka.event.LookupClassification
-import akka.actor.Actor
-import akka.actor.ActorRef
 import java.util.Date
-import me.lightspeed7.mongofs.MongoFile
-import me.lightspeed7.mongofs.MongoFileConstants
+
+import scala.concurrent.duration.DurationInt
+
+import akka.actor.{ Actor, ActorRef, ActorSystem, Props, actorRef2Scala }
+import akka.event.{ ActorEventBus, LookupClassification }
+import akka.routing.RoundRobinPool
 import me.lightspeed7.mongoFS.tutorial.image.ImageService
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
-import org.bson.types.ObjectId
-import play.api.libs.iteratee.Concurrent
-import play.api.libs.json.JsValue
-import play.api.libs.json._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.concurrent.duration._
-import scala.collection.mutable.Subscriber
-import play.libs.Akka
-import akka.actor.Props
-import akka.routing.RoundRobinPool
-import org.mongodb.Document
+import me.lightspeed7.mongofs.MongoFile
 import me.lightspeed7.mongofs.url.MongoFileUrl
-import akka.actor.ActorSystem
-import com.mongodb.DBObject
-import com.mongodb.BasicDBObject
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.Concurrent
+import play.api.libs.json.{ JsString, JsValue, Json }
 
 object `package` {
 
@@ -72,7 +62,7 @@ object `package` {
     }
   }
 
-  // 
+  //
   // Socket Listeners
   // ///////////////////////////////
   class Listener(name: String, out: Concurrent.Channel[JsValue]) extends Actor {
@@ -102,8 +92,8 @@ object `package` {
     }
   }
 
-  // 
-  // Thumbnailer Actor 
+  //
+  // Thumbnailer Actor
   // /////////////////////////////
   class Thumbnailer(name: String) extends Actor {
     val mediaType = "image/png"
