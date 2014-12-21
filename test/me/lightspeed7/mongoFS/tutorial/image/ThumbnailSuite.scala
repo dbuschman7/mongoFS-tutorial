@@ -1,17 +1,20 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
+import akka.actor.Props
+import org.junit._
 import org.junit.Assert._
-import org.junit.Before
-import org.junit.Test
 import org.junit.runner.RunWith
-import org.scalatest.junit._
-import scala.collection.mutable.ListBuffer
-import org.scalatestplus.play.PlaySpec
 import java.io.File
-import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 import java.io.FileInputStream
+import me.lightspeed7.mongoFS.tutorial._
+import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
+import org.scalatest.junit._
+import org.scalatestplus.play.PlaySpec
+import play.libs.Akka
+import scala.collection.mutable.ListBuffer
 import scala.util.Try
 import scala.io.Source
+import akka.actor.ActorSystem
 
 class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
 
@@ -49,15 +52,29 @@ class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
     }
   }
 
-  @Test def scaleTigger() {
+  @Ignore @Test def scaleTigger() {
     println(new File(".").getCanonicalPath)
     val source = MongoConfig.imageFS.upload(new File("test/resources/tigger.jpg"), "image/jpeg")
 
     val mediumSink = MongoConfig.imageFS.createNew(source.getURL.getFilePath, source.getURL.getMediaType)
-    ThumbnailGenerator.createThumbnail(source, mediumSink, 500)
+    ImageService.createThumbnail(source, mediumSink, 500)
 
     val thumbSink = MongoConfig.imageFS.createNew(source.getURL.getFilePath, source.getURL.getMediaType)
-    ThumbnailGenerator.createThumbnail(source, thumbSink, 150)
+    ImageService.createThumbnail(source, thumbSink, 150)
+  }
 
+  @Test def uploadTrigger() {
+
+    println(new File(".").getCanonicalPath)
+    val source = MongoConfig.imageFS.upload(new File("test/resources/tigger.jpg"), "image/jpeg")
+
+    val system = ActorSystem("Test")
+
+    val ref = system.actorOf(Props(classOf[Thumbnailer], "thumber"))
+    ref ! CreateImage(source)
+
+    assert(ref != null)
+
+    system.shutdown()
   }
 }

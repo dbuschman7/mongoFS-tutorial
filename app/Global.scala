@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 import akka.actor.Actor
 import play.api.libs.iteratee.Concurrent
-
 import me.lightspeed7.mongoFS.tutorial._
+import me.lightspeed7.mongoFS.tutorial.image.ImageService
 
 object Global extends GlobalSettings {
 
@@ -19,7 +19,6 @@ object Global extends GlobalSettings {
 
     println(MongoConfig.images.toString())
     println(MongoConfig.imageFS.toString())
-
    
 
   }

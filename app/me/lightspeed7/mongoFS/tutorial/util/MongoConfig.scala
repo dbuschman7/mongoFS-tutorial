@@ -21,7 +21,7 @@ object MongoConfig {
   val baseName = "images"
 
   lazy val imageFS: MongoFileStore = buildStore(baseName, ChunkSize.medium_128K)
-  lazy val images: MongoCollection[Document] = buildCollection(baseName)
+  lazy val images: DBCollection = buildCollection(baseName)
 
   def init(hostUrl: String) = {
 
@@ -46,11 +46,13 @@ object MongoConfig {
 
   }
 
-  def buildCollection(bucketName: String): MongoCollection[Document] = {
+  def buildCollection(bucketName: String): DBCollection = {
 
-    db.getCollection("images", //
-      MongoCollectionOptions.builder().writeConcern(WriteConcern.ACKNOWLEDGED)
-        .readPreference(ReadPreference.primary()).build())
+    val coll = db.getSurrogate.getCollection(baseName) 
+    coll.setReadPreference(ReadPreference.primaryPreferred())
+    coll.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+    coll
+    
   }
 }
 
