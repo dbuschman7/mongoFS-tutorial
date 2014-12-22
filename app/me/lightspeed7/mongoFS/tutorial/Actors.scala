@@ -1,12 +1,13 @@
 package me.lightspeed7.mongoFS.tutorial
 
 import java.util.Date
-
 import scala.concurrent.duration.DurationInt
-
-import akka.actor.{ Actor, ActorRef, ActorSystem, Props, actorRef2Scala }
+import com.mongodb.BasicDBObject
+import akka.actor.{ Actor, ActorRef, ActorSystem, PoisonPill, Props, actorRef2Scala }
 import akka.event.{ ActorEventBus, LookupClassification }
 import akka.routing.RoundRobinPool
+import me.lightspeed7.mongoFS.tutorial.image.Image
+import me.lightspeed7.mongoFS.tutorial.image.Image.fromMongoDB
 import me.lightspeed7.mongoFS.tutorial.image.ImageService
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 import me.lightspeed7.mongofs.MongoFile
@@ -14,6 +15,7 @@ import me.lightspeed7.mongofs.url.MongoFileUrl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Concurrent
 import play.api.libs.json.{ JsString, JsValue, Json }
+import me.lightspeed7.mongoFS.tutorial.image.UiImage
 
 object `package` {
 
@@ -23,6 +25,7 @@ object `package` {
   // ///////////////////////////////
   case class Start(out: Concurrent.Channel[JsValue])
   case class Tick(foo: String = "foo")
+  case class Load(listener: ActorRef)
 
   case class ServerTime(data: String = new Date().toString(), target: String = "serverTime")
   implicit val serverTimeWrites = Json.writes[ServerTime]
@@ -78,22 +81,45 @@ object `package` {
     override def preStart() {
       super.preStart()
       EventBus.subscribe(self, thumb)
-      println("Listener Ready")
+      println(s"Listener Ready - ${name}, path - ${self.path}")
 
     }
 
     override def postStop() {
-      println("Listener - Shutting Down")
       if (cancellable != null) {
         cancellable.cancel
       }
       EventBus.unsubscribe(self)
       super.postStop()
+      println(s"Listener ShutDown - ${name}, path - ${self.path}")
     }
   }
 
   //
-  // Thumbnailer Actor
+  // Image Loader
+  // /////////////////////////////
+  class Loader(name: String) extends Actor {
+    def receive = {
+      case Load(listener) => {
+        println(s"Loader Starting - ${name}, reporting to ${listener.path}")
+
+        // FIX ME - blocking
+        val iter = ImageService.list(new BasicDBObject("ts", -1))
+        while (iter.hasNext()) {
+          val current: Image = iter.next(); // auto-casting ??
+          val currentUI: UiImage = current
+          println(s"Found image - ${currentUI.id}")
+          listener ! Payload(Json.toJson(currentUI), "image")
+        }
+
+        self ! PoisonPill
+      }
+    }
+
+  }
+
+  //
+  // Thumbnailer
   // /////////////////////////////
   class Thumbnailer(name: String) extends Actor {
     val mediaType = "image/png"

@@ -1,19 +1,17 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
 import java.awt.image.BufferedImage
-
 import scala.util.Try
-
 import org.bson.types.ObjectId
 import org.imgscalr.Scalr
-
 import com.mongodb.{ BasicDBObject, WriteConcern }
-
 import javax.imageio.ImageIO
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants, MongoFileWriter }
 import me.lightspeed7.mongofs.url.MongoFileUrl
 import play.api.Logger
+import java.util.Date
+import scala.concurrent.Future
 
 object ImageService {
 
@@ -22,7 +20,9 @@ object ImageService {
   // //////////////////////////
   def insert(file: MongoFile): Option[ObjectId] = {
     try {
-      val obj = new BasicDBObject("_id", file.getId()).append("imageUrl", file.getURL.toString())
+      val obj = new BasicDBObject("_id", file.getId()) //
+        .append("imageUrl", file.getURL.toString()) //
+        .append("ts", new Date())
 
       MongoConfig.images.save(obj)
       Some(file.getId)
@@ -32,6 +32,11 @@ object ImageService {
         None
       }
     }
+  }
+
+  def list(orderBy: BasicDBObject) = {
+    val f = MongoConfig.images.find().sort(orderBy)
+    f.iterator()
   }
 
   def updateMediumUrl(id: ObjectId, mediumUrl: MongoFileUrl): Option[ObjectId] = {
@@ -82,4 +87,5 @@ object ImageService {
     Try(ImageIO.write(img, "png", out)).map(_ => out.close)
     writer.getMongoFile
   }
+
 }

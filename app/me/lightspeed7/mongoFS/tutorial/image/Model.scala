@@ -1,15 +1,24 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
 import org.bson.types.ObjectId
-
 import play.api.libs.json.{ Format, JsError, JsString, JsSuccess, JsValue, Json }
+import com.mongodb.DBObject
 
 // Image Model
 case class Image(
   _id: ObjectId,
   imageUrl: String,
   thumbUrl: Option[String],
-  mediumUrl: Option[String])
+  mediumUrl: Option[String],
+  description: Option[String],
+  tooltip: Option[String] //
+  )
+
+case class UiImage(
+  id: String,
+  description: Option[String],
+  tooltip: Option[String] //
+  )
 
 object Image {
 
@@ -40,4 +49,23 @@ object Image {
     }
   }
 
+  implicit def fromMongoDB(obj: DBObject): Image = {
+    val id: ObjectId = obj.get("_id").asInstanceOf[ObjectId]
+    val imageUrl = obj.get("imageUrl").toString
+    val mediumUrl = if (obj.get("mediumUrl") != null) Some(obj.get("mediumUrl").toString) else None
+    val thumbUrl = if (obj.get("thumbUrl") != null) Some(obj.get("thumbUrl").toString) else None
+    val description = if (obj.get("description") != null) Some(obj.get("description").toString) else None
+    val tooltip = if (obj.get("tooltip") != null) Some(obj.get("tooltip").toString) else None
+
+    Image(id, imageUrl, thumbUrl, mediumUrl, description, tooltip)
+  }
+
+}
+
+object UiImage {
+  implicit val UiImageFmt = Json.format[UiImage]
+
+  implicit def fromMongoDB(obj: Image): UiImage = {
+    UiImage(obj._id.toString(), obj.description, obj.tooltip)
+  }
 }

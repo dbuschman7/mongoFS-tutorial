@@ -4,7 +4,7 @@ mongoFS-tutorial
 A example app showing the use of MongoFS and the Mongo-Java-Driver in a reactive way.
 
 This project uses - 
-* Websockets
+* Websockets ( actually SSEs )
 * Angular.js 
 * Play 2.3.x
 * MongoDB 2.6.x

@@ -20,7 +20,7 @@ angular.module('tutorial.controllers', [])
 			
 			// Image Gallery - Dummy thumbnail images for now 
 			$scope.images = [];
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
+			$scope.images.push();
 			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
 			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
 			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
@@ -37,9 +37,10 @@ angular.module('tutorial.controllers', [])
 					var target = raw.target;
 					var data = raw.data;
 					// console.log("Received data for " + target);
-					if (target == "thumbnail") {
-						console.log("thumb");
-						$scope.images.unshift(data);
+					if (target == "image") {
+						var img = { src : '/images/thumb/' + data.id, alt : data.tooltip, desc : data.description }
+						console.log("thumb - " + img.src);
+						$scope.images.unshift(img);
 					} else if (target == "serverTime") {
 						$scope.serverTime = data;
 					} else if (target == "statistics") {
