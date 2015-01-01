@@ -1,32 +1,46 @@
 package controllers
 
-import java.io.OutputStream
-import java.util.Date
+import java.io.{ InputStream, OutputStream }
 
-import scala.collection.mutable.ListBuffer
 import scala.compat.Platform
+import scala.concurrent.Future
+import scala.util.{ Failure, Success, Try }
 
 import org.slf4j.LoggerFactory
 
+import akka.actor.actorRef2Scala
+import me.lightspeed7.mongoFS.tutorial.Actors.{ CreateImage, thumbnailers }
+import me.lightspeed7.mongoFS.tutorial.image.ImageService
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 import me.lightspeed7.mongofs.{ MongoFile, MongoFileWriter }
-import me.lightspeed7.mongofs.util.TimeMachine
 import play.api.http.MimeTypes
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.iteratee.Iteratee
+import play.api.libs.iteratee.{ Enumerator, Iteratee }
 import play.api.libs.json.Json
-import play.api.mvc.{ Action, BodyParsers, Controller, MultipartFormData }
+import play.api.mvc.{ Action, BodyParsers, Controller, MultipartFormData, ResponseHeader, Result }
 
 object MongoFS extends Controller {
 
-  case class File(fileName: String, lookupUrl: String, storageSize: Long, contentType: String, duration: Long)
-
-  case class Response(files: List[File], start: Date, duration: Long)
-
-  implicit val fileFormat = Json.format[File]
+  case class Response(duration: Long)
   implicit val responseFormat = Json.format[Response]
 
-  val logger: org.slf4j.Logger = LoggerFactory.getLogger(classOf[MongoFS]);
+  def download(size: String, uuid: String) = Action.async { request =>
+
+    Future {
+      val input: Try[(Long, String, InputStream)] = ImageService.inputStreamForURL(uuid, size)
+
+      input match {
+        case Success((length, media, is)) => {
+          Result(
+            header = ResponseHeader(200, Map(CONTENT_LENGTH -> length.toString, CONTENT_TYPE -> media)),
+            body = Enumerator.fromStream(is))
+        }
+        case Failure(f) => {
+          NoContent
+        }
+      }
+    }
+  }
 
   def upload() =
     Action(parse.multipartFormData(handleFilePartToMongo)) {
@@ -39,10 +53,6 @@ object MongoFS extends Controller {
 
           var start: Long = Platform.currentTime
           try {
-
-            val files: ListBuffer[File] = ListBuffer[File]()
-
-            logger.info("Starting processing creation");
             request.body.files foreach {
               case MultipartFormData.FilePart(key, filename, contentType, file) =>
                 {
@@ -50,27 +60,20 @@ object MongoFS extends Controller {
                   val uploadStart: Long = file.get("start").toString().toLong
                   file.put("start", null) // clear it out
                   start = Math.min(start, uploadStart) // find the first file to upload
-
-                  MongoConfig.imageFS.expireFile(file, TimeMachine.now().forward(2).hours().inTime)
-
-                  val thisFile = File(file.getFilename(), file.getURL().getUrl().toString(),
-                    file.getStorageLength(), file.getContentType(),
-                    (Platform.currentTime - uploadStart) / 1000)
-
-                  files += thisFile
                 }
             }
 
             // send the response
             val duration = (Platform.currentTime - start) / 1000
-            Ok(Json.toJson(Response(files.toList, new Date(start), duration)))
+            Ok(Json.toJson(Response(duration)))
 
           } catch {
             case e: Exception => {
+              lazy val logger: org.slf4j.Logger = LoggerFactory.getLogger(classOf[MongoFS]);
 
               logger.error(e.getMessage(), e)
               val duration = (Platform.currentTime - start) / 1000
-              val response = Response(null, new Date(start), duration)
+              val response = Response(duration)
               InternalServerError(Json.toJson(response))
             }
           }
@@ -84,26 +87,22 @@ object MongoFS extends Controller {
         val uploadStart: Long = Platform.currentTime
 
         def setStartTime(mongoFile: MongoFile): MongoFile = {
-          mongoFile.put("start", uploadStart);
+          mongoFile.put("start", uploadStart)
           mongoFile
         }
 
-        logger.info("Starting file upload");
-
         // simply write the data straight to MongoDB as a mongoFS
         val mongoFileWriter: MongoFileWriter = MongoConfig.imageFS.createNew(filename, contentType.get)
-        logger.info("Getting mongo input file");
 
-        // stream the data through the proxy
         Iteratee.fold[Array[Byte], OutputStream](
           mongoFileWriter.getOutputStream()) { (os, data) =>
-            // println("Writing data chunk");
             os.write(data)
             os
           }.map { os =>
-            logger.info("Closing output stream");
             os.close()
-            setStartTime(mongoFileWriter.getMongoFile())
+            val file = setStartTime(mongoFileWriter.getMongoFile())
+            thumbnailers ! CreateImage(file)
+            file
           }
     }
 

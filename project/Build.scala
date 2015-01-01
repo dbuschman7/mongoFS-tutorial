@@ -45,20 +45,25 @@ object ApplicationBuild extends Build {
   }
 
   val appDependencies = Seq(
-    "commons-io" % "commons-io" % "2.4",
+
+    // GUI
     "org.webjars" %% "webjars-play" % "2.3.0" withSources (),
     "org.webjars" % "angularjs" % "1.2.23",
     "org.webjars" % "bootstrap" % "3.2.0",
-    //    "org.webjars" % "d3js" % "3.4.11",
+    "org.webjars" % "angular-ui-bootstrap" % "0.12.0",
+    
+    // Image file support
     "org.mongodb" % "mongo-java-driver" % "2.12.4",
-    "me.lightspeed7" % "mongoFS" % "0.9.0",
-    "com.github.athieriot" %% "specs2-embedmongo" % "0.7.0",
+    "me.lightspeed7" % "mongoFS" % "0.9.1",
+    "org.webjars" % "angular-file-upload" % "2.0.5",
+
+    // image support
     "org.imgscalr" % "imgscalr-lib" % "4.2",
-    "commons-lang" % "commons-lang" % "2.6",
-    //
+    "com.drewnoakes" % "metadata-extractor" % "2.7.0" withSources (),
+    
+    // testing
     "org.scalatestplus" %% "play" % "1.1.0" % "test",
     "com.novocode" % "junit-interface" % "0.11" % "test")
-
 
   val root = Project("tutorial", file("."))
     .enablePlugins(play.PlayScala)

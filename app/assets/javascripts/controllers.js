@@ -1,36 +1,21 @@
+angular.module('tutorial.controllers', ['ui.bootstrap'])
 
-
-angular.module('tutorial.controllers', [])
-
-.controller('ImageController',
-		function($scope) {
+.controller(
+		'ImageController',
+		function($scope, $modal) {
 			// Initialize data fields
 			$scope.serverTime = "Nothing Here Yet";
-			
+
 			// Metrics
 			$scope.fileCount = 0;
 			$scope.imageBytes = 0;
 			$scope.storageBytes = 0;
 			$scope.ratio = 0;
-			
-			// Form Data
-			$scope.encrypted = true;
-			$scope.compressed = true;
-			$scope.zipExpand = false;
-			
-			// Image Gallery - Dummy thumbnail images for now 
-			$scope.images = [];
-			$scope.images.push();
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			$scope.images.push({ src : '/assets/images/thumb1.png', alt : 'Thunmb1', desc :'Thumbnail 1'});
-			
 
+			// Image Gallery objects
+			$scope.images = [];
+
+			// events from server handler
 			$scope.handleServerEvent = function(e) {
 				$scope.$apply(function() {
 					var raw = JSON.parse(e.data);
@@ -38,7 +23,16 @@ angular.module('tutorial.controllers', [])
 					var data = raw.data;
 					// console.log("Received data for " + target);
 					if (target == "image") {
-						var img = { src : '/images/thumb/' + data.id, alt : data.tooltip, desc : data.description }
+						var img = {
+							id : data.id,	
+							tooltip : data.tooltip,
+							description : data.description,
+							fileName : data.fileName,
+							size : data.size / 1024,
+							storage: data.storage / 1024,
+							format: data.format,
+							contentType : data.contentType
+						}
 						console.log("thumb - " + img.src);
 						$scope.images.unshift(img);
 					} else if (target == "serverTime") {
@@ -54,35 +48,19 @@ angular.module('tutorial.controllers', [])
 						$scope.data.push(data.DELETE);
 						redrawMethods($scope.data);
 
-						// browser data
-						$scope.safari = data.Safari;
-						$scope.chrome = data.Chrome;
-						$scope.firefox = data.Firefox;
-						$scope.ie = data.IE;
-						$scope.http = data.HttpClient;
-						$scope.highBrand = determineHighBrand($scope);
-
-						// device data
-						$scope.desktop = data.Desktop;
-						$scope.tablet = data.Tablet;
-						$scope.phone = data.Phone;
-						$scope.tv = data.TV;
-						$scope.highDevice = determineHighDevice($scope);
-
-						// response time
-						$scope.requests = data.requests;
-						$scope.responseTime = data.totalResponseTime / data.requests;
 					}
 				});
 			};
 
+			// sse socket
 			$scope.startSocket = function(uuid) {
 				$scope.stopSocket();
 				$scope.images = [];
-				var url = "/sse/" + uuid 
+				var url = "/sse/" + uuid
 				console.log(url);
 				$scope.socket = new EventSource(url);
-				$scope.socket.addEventListener("message", $scope.handleServerEvent, false);
+				$scope.socket.addEventListener("message",
+						$scope.handleServerEvent, false);
 			};
 
 			$scope.stopSocket = function() {
@@ -90,24 +68,61 @@ angular.module('tutorial.controllers', [])
 					$scope.socket.close();
 				}
 			};
-		}
-)
-/*
-This directive allows us to pass a function in on an enter key to do what we want.
- */
-.directive('ngEnter', function () {
-    return function (scope, element, attrs) {
-        element.bind("keydown keypress", function (event) {
-            if(event.which === 13) {
-                scope.$apply(function (){
-                    scope.$eval(attrs.ngEnter);
-                });
- 
-                event.preventDefault();
-            }
-        });
-    };
-})
-;
 
-//
+			// Modal window
+//			$scope.items = [ 'item1', 'item2', 'item3' ];
+
+			$scope.open = function(size, img) {
+
+				var modalInstance = $modal.open({
+					templateUrl : 'myModalContent.html',
+					controller : 'ImageModalInstanceCtrl',
+					size : size,
+					resolve : {
+						image : function() {
+							console.log("Img " + img)
+							return img;
+						}
+						
+					}
+				});
+
+//				modalInstance.result.then(function(selectedItem) {
+//					$scope.selected = selectedItem;
+//				}, function() {
+//					$log.info('Modal dismissed at: ' + new Date());
+//				});
+			};
+		})
+		
+.controller('ImageModalInstanceCtrl', function ($scope, $modalInstance, image) {
+
+  $scope.image = image;
+  console.log("Image.id" + image.id)
+
+  $scope.ok = function () {
+    $modalInstance.close("");
+  };
+
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+})
+
+/*
+ * This directive allows us to pass a function in on an enter key to do what we
+ * want.
+ */
+.directive('ngEnter', function() {
+	return function(scope, element, attrs) {
+		element.bind("keydown keypress", function(event) {
+			if (event.which === 13) {
+				scope.$apply(function() {
+					scope.$eval(attrs.ngEnter);
+				});
+
+				event.preventDefault();
+			}
+		});
+	};
+});

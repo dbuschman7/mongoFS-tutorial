@@ -1,23 +1,65 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
-import java.awt.image.BufferedImage
-import scala.util.Try
+import java.io.{ FileNotFoundException, InputStream }
+import java.util.Date
+
+import scala.util.{ Failure, Success, Try }
+
 import org.bson.types.ObjectId
-import org.imgscalr.Scalr
+
 import com.mongodb.{ BasicDBObject, WriteConcern }
-import javax.imageio.ImageIO
+
+import me.lightspeed7.mongoFS.tutorial.image.Image.fromMongoDB
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
-import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants, MongoFileWriter }
+import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants }
 import me.lightspeed7.mongofs.url.MongoFileUrl
 import play.api.Logger
-import java.util.Date
-import scala.concurrent.Future
 
 object ImageService {
 
   //
-  // MongoDB methods
+  // MongoDB lookup methods
   // //////////////////////////
+  def find(uuid: String): Try[Image] = {
+    val file = MongoConfig.images.findOne(new BasicDBObject("_id", new ObjectId(uuid)))
+    if (file != null) Success(file) else Failure(new FileNotFoundException(s"Could not find file for uuid =${uuid}"))
+  }
+
+  def getMongoFile(url: MongoFileUrl): Try[MongoFile] = {
+    val file = MongoConfig.imageFS.findOne(url)
+    if (file != null) Success(file) else Failure(new FileNotFoundException(s"Could not find file for url =${url}"))
+  }
+
+  private[image] def determineSizeUrl(size: String, image: Image): Try[MongoFileUrl] = {
+    val url: Option[String] = size match {
+      case "medium" => image.mediumUrl
+      case "thumb"  => image.thumbUrl
+      case "image"  => Option(image.imageUrl)
+      case _        => None
+    }
+    url.map { m => Success(MongoFileUrl.construct(m)) } //
+      .getOrElse(Failure(new IllegalArgumentException("Invalid image size requested")))
+  }
+
+  def inputStreamForURL(uuid: String, size: String): Try[(Long, String, InputStream)] = {
+
+    for {
+      image <- find(uuid)
+      url <- determineSizeUrl(size, image)
+      file <- getMongoFile(url)
+    } yield {
+      (file.getLength, file.getContentType, file.getInputStream)
+    }
+  }
+
+  def list(orderBy: BasicDBObject) = {
+    val f = MongoConfig.images.find().sort(orderBy)
+    f.iterator()
+  }
+
+  //
+  // MongoDB Update Methods
+  // ////////////////////////////
   def insert(file: MongoFile): Option[ObjectId] = {
     try {
       val obj = new BasicDBObject("_id", file.getId()) //
@@ -32,11 +74,6 @@ object ImageService {
         None
       }
     }
-  }
-
-  def list(orderBy: BasicDBObject) = {
-    val f = MongoConfig.images.find().sort(orderBy)
-    f.iterator()
   }
 
   def updateMediumUrl(id: ObjectId, mediumUrl: MongoFileUrl): Option[ObjectId] = {
@@ -64,28 +101,6 @@ object ImageService {
         None
       }
     }
-  }
-
-  //
-  // Thumbnail creation
-  // //////////////////////////
-  def createThumbnail(source: MongoFile, sink: MongoFileWriter, sideLength: Int) = {
-    writeInto(sink, scaled(from(source), sideLength))
-  }
-
-  private[image] def scaled(image: BufferedImage, sideLength: Int): BufferedImage = {
-    Scalr.resize(image, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, sideLength, Scalr.OP_ANTIALIAS);
-  }
-
-  private[image] def from(file: MongoFile): BufferedImage = {
-    ImageIO.read(file.getInputStream)
-  }
-
-  private[image] def writeInto(writer: MongoFileWriter, img: BufferedImage): MongoFile = {
-
-    val out = writer.getOutputStream
-    Try(ImageIO.write(img, "png", out)).map(_ => out.close)
-    writer.getMongoFile
   }
 
 }

@@ -9,8 +9,6 @@ import org.junit.Assert.{ assertEquals, assertTrue }
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatestplus.play.PlaySpec
 
-import akka.actor.{ ActorSystem, Props, actorRef2Scala }
-import me.lightspeed7.mongoFS.tutorial.{ CreateImage, Thumbnailer }
 import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 
 class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
@@ -60,18 +58,10 @@ class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
     ImageService.createThumbnail(source, thumbSink, 150)
   }
 
-  @Test def uploadTrigger() {
+  @Ignore @Test def uploadTrigger() {
 
     println(new File(".").getCanonicalPath)
     val source = MongoConfig.imageFS.upload(new File("test/resources/tigger.jpg"), "image/jpeg")
 
-    val system = ActorSystem("Test")
-
-    val ref = system.actorOf(Props(classOf[Thumbnailer], "thumber"))
-    ref ! CreateImage(source)
-
-    assert(ref != null)
-
-    system.shutdown()
   }
 }

@@ -2,15 +2,16 @@ package controllers
 
 import java.util.UUID
 
-import akka.actor.Props
-import me.lightspeed7.mongoFS.tutorial.{ Listener, Loader, Load }
+import scala.concurrent.Future
+
+import akka.actor.{ Props, actorRef2Scala }
+import me.lightspeed7.mongoFS.tutorial.Actors.{ Listener, Load, Loader }
 import play.api.libs.EventSource
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.{ Concurrent, Enumeratee }
 import play.api.libs.json.JsValue
 import play.api.mvc.{ Action, AnyContent, Controller }
 import play.libs.Akka
-import scala.concurrent._
 
 object Application extends Controller {
 

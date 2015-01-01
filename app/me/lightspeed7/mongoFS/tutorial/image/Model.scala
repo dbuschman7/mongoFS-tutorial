@@ -1,10 +1,16 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
 import org.bson.types.ObjectId
-import play.api.libs.json.{ Format, JsError, JsString, JsSuccess, JsValue, Json }
 import com.mongodb.DBObject
+import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
+import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants }
+import me.lightspeed7.mongofs.url.MongoFileUrl
+import play.api.libs.json.{ Format, JsError, JsString, JsSuccess, JsValue, Json }
+import java.util.Date
 
-// Image Model
+//
+// Image Model in MongoDB
+// //////////////////////////////
 case class Image(
   _id: ObjectId,
   imageUrl: String,
@@ -14,15 +20,7 @@ case class Image(
   tooltip: Option[String] //
   )
 
-case class UiImage(
-  id: String,
-  description: Option[String],
-  tooltip: Option[String] //
-  )
-
 object Image {
-
-  // JSON formatting
   implicit val objectIdFormat: Format[ObjectId] = new Format[ObjectId] {
 
     def reads(json: JsValue) = {
@@ -38,16 +36,20 @@ object Image {
     def writes(oId: ObjectId): JsValue = {
       JsString(oId.toString)
     }
-
   }
-  implicit val imageFmt = Json.format[Image]
+
+  def getMongoFile(imageUrl: String): MongoFile = {
+    MongoConfig.imageFS.findOne(MongoFileUrl.construct(imageUrl))
+  }
 
   def fields() = {
-    val fields = (Map[String, Any]() /: Image.getClass.getDeclaredFields) { (a, f) =>
+    Image.getClass.getDeclaredFields.foldLeft(Map[String, Any]()) { (a, f) =>
       f.setAccessible(true)
       a + (f.getName -> f.get(this))
     }
   }
+
+  implicit val imageFmt = Json.format[Image]
 
   implicit def fromMongoDB(obj: DBObject): Image = {
     val id: ObjectId = obj.get("_id").asInstanceOf[ObjectId]
@@ -62,10 +64,51 @@ object Image {
 
 }
 
+//
+// JSON class for Angular
+// //////////////////////////////
+case class UiImage(
+  id: String,
+  description: Option[String],
+  tooltip: Option[String],
+  fileName: String,
+  size: Long,
+  storage: Long,
+  format: String,
+  contentType: String //
+  )
+
 object UiImage {
   implicit val UiImageFmt = Json.format[UiImage]
 
-  implicit def fromMongoDB(obj: Image): UiImage = {
-    UiImage(obj._id.toString(), obj.description, obj.tooltip)
+  implicit def fromImage(obj: Image): UiImage = {
+    val file = Image.getMongoFile(obj.imageUrl)
+
+    UiImage(obj._id.toString(), obj.description, obj.tooltip, //
+      file.getFilename, file.getLength, file.getStorageLength, //
+      file.getString(MongoFileConstants.format), file.getContentType)
   }
+}
+
+//
+// Statistics data to front end
+// //////////////////////////////
+case class Statistics(file: Long, size: Long, storage: Long)
+object Statistics {
+  implicit val StatisticsFormat = Json.format[Statistics]
+}
+//
+// Server Time sent to Angular
+// //////////////////////////////
+case class ServerTime(data: String = new Date().toString(), target: String = "serverTime")
+object ServerTime {
+  implicit val serverTimeWrites = Json.writes[ServerTime]
+}
+
+//
+// Payload object sent to Angular
+// //////////////////////////////
+case class Payload(data: JsValue, target: String)
+object Payload {
+  implicit val payloadWrites = Json.writes[Payload]
 }
