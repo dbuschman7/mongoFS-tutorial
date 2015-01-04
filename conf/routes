@@ -3,9 +3,14 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
-GET 	/sse/:uuid 					controllers.Application.sse(uuid:String)
+GET   /                      controllers.Application.index
+GET   /sse/:uuid             controllers.Application.sse(uuid:String)
+
+GET   /images/medium/:uuid   controllers.MongoFS.download(size:String = "medium", uuid:String)
+GET   /images/thumb/:uuid    controllers.MongoFS.download(size:String = "thumb", uuid:String)
+GET   /images/image/:uuid    controllers.MongoFS.download(size:String = "image", uuid:String)
+PUT   /upload                controllers.MongoFS.upload()
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
-GET     /webjars/*file              controllers.WebJarAssets.at(file)
+GET   /assets/*file          controllers.Assets.at(path="/public", file)
+GET   /webjars/*file         controllers.WebJarAssets.at(file)

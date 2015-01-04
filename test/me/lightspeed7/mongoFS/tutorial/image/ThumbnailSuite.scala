@@ -9,8 +9,6 @@ import org.junit.Assert.{ assertEquals, assertTrue }
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatestplus.play.PlaySpec
 
-import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
-
 class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
 
   var sb: StringBuilder = _
@@ -20,7 +18,7 @@ class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
     sb = new StringBuilder("ScalaTest is ")
     lb = new ListBuffer[String]
 
-    MongoConfig.setHostUrl("mongodb://localhost:27017/playground")
+    ImageService.setHostUrl("mongodb://localhost:27017/playground")
 
   }
 
@@ -49,19 +47,19 @@ class ThumbnailSuite extends PlaySpec with AssertionsForJUnit {
 
   @Ignore @Test def scaleTigger() {
     println(new File(".").getCanonicalPath)
-    val source = MongoConfig.imageFS.upload(new File("test/resources/tigger.jpg"), "image/jpeg")
-
-    val mediumSink = MongoConfig.imageFS.createNew(source.getURL.getFilePath, source.getURL.getMediaType)
-    ImageService.createThumbnail(source, mediumSink, 500)
-
-    val thumbSink = MongoConfig.imageFS.createNew(source.getURL.getFilePath, source.getURL.getMediaType)
-    ImageService.createThumbnail(source, thumbSink, 150)
+    //    val source = MongoConfig.imageFS.upload(new File("test/resources/tigger.jpg"), "image/jpeg")
+    //
+    //    val mediumSink = MongoConfig.imageFS.createNew(source.getURL.getFilePath, source.getURL.getMediaType)
+    //    ImageService.createThumbnail(source, mediumSink, 500)
+    //
+    //    val thumbSink = MongoConfig.imageFS.createNew(source.getURL.getFilePath, source.getURL.getMediaType)
+    //    ImageService.createThumbnail(source, thumbSink, 150)
   }
 
   @Ignore @Test def uploadTrigger() {
 
-    println(new File(".").getCanonicalPath)
-    val source = MongoConfig.imageFS.upload(new File("test/resources/tigger.jpg"), "image/jpeg")
+    //    println(new File(".").getCanonicalPath)
+    //    val source = ImageService.imageFS.upload(new File("test/resources/tigger.jpg"), "image/jpeg")
 
   }
 }

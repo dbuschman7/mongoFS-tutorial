@@ -6,11 +6,10 @@ angular.module('tutorial.controllers', ['ui.bootstrap'])
 			// Initialize data fields
 			$scope.serverTime = "Nothing Here Yet";
 
-			// Metrics
+			// Statistics
 			$scope.fileCount = 0;
 			$scope.imageBytes = 0;
 			$scope.storageBytes = 0;
-			$scope.ratio = 0;
 
 			// Image Gallery objects
 			$scope.images = [];
@@ -35,19 +34,11 @@ angular.module('tutorial.controllers', ['ui.bootstrap'])
 						}
 						console.log("thumb - " + img.src);
 						$scope.images.unshift(img);
-					} else if (target == "serverTime") {
-						$scope.serverTime = data;
 					} else if (target == "statistics") {
-						$scope.data.shift();
-						$scope.data.shift();
-						$scope.data.shift();
-						$scope.data.shift();
-						$scope.data.push(data.GET);
-						$scope.data.push(data.PUT);
-						$scope.data.push(data.POST);
-						$scope.data.push(data.DELETE);
-						redrawMethods($scope.data);
-
+						$scope.fileCount = data.files;
+						$scope.imageBytes = data.size / (1024 * 1024);
+						$scope.storageBytes = data.storage / (1024 * 1024);
+						$scope.serverTime = data.serverTime;
 					}
 				});
 			};

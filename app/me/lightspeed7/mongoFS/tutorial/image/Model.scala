@@ -2,11 +2,11 @@ package me.lightspeed7.mongoFS.tutorial.image
 
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
-import me.lightspeed7.mongoFS.tutorial.util.MongoConfig
 import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants }
 import me.lightspeed7.mongofs.url.MongoFileUrl
 import play.api.libs.json.{ Format, JsError, JsString, JsSuccess, JsValue, Json }
 import java.util.Date
+import scala.util.Try
 
 //
 // Image Model in MongoDB
@@ -38,14 +38,10 @@ object Image {
     }
   }
 
-  def getMongoFile(imageUrl: String): MongoFile = {
-    MongoConfig.imageFS.findOne(MongoFileUrl.construct(imageUrl))
-  }
-
   def fields() = {
-    Image.getClass.getDeclaredFields.foldLeft(Map[String, Any]()) { (a, f) =>
-      f.setAccessible(true)
-      a + (f.getName -> f.get(this))
+    Image.getClass.getDeclaredFields.foldLeft(Map[String, Any]()) { (map, field) =>
+      field.setAccessible(true)
+      map + (field.getName -> field.get(this))
     }
   }
 
@@ -81,28 +77,24 @@ case class UiImage(
 object UiImage {
   implicit val UiImageFmt = Json.format[UiImage]
 
-  implicit def fromImage(obj: Image): UiImage = {
-    val file = Image.getMongoFile(obj.imageUrl)
-
-    UiImage(obj._id.toString(), obj.description, obj.tooltip, //
-      file.getFilename, file.getLength, file.getStorageLength, //
-      file.getString(MongoFileConstants.format), file.getContentType)
+  implicit def fromImage(obj: Image): Try[UiImage] = {
+    for {
+      url <- Try(MongoFileUrl.construct(obj.imageUrl))
+      file <- ImageService.getMongoFile(url)
+    } yield {
+      UiImage(obj._id.toString(), obj.description, obj.tooltip, //
+        file.getFilename, file.getLength, file.getStorageLength, //
+        file.getString(MongoFileConstants.format), file.getContentType)
+    }
   }
 }
 
 //
 // Statistics data to front end
 // //////////////////////////////
-case class Statistics(file: Long, size: Long, storage: Long)
-object Statistics {
-  implicit val StatisticsFormat = Json.format[Statistics]
-}
-//
-// Server Time sent to Angular
-// //////////////////////////////
-case class ServerTime(data: String = new Date().toString(), target: String = "serverTime")
-object ServerTime {
-  implicit val serverTimeWrites = Json.writes[ServerTime]
+case class StatsData(files: Long, size: Long, storage: Long, serverTime: String = new Date().toString())
+object StatsData {
+  implicit val StatsDataFormat = Json.format[StatsData]
 }
 
 //
@@ -110,5 +102,5 @@ object ServerTime {
 // //////////////////////////////
 case class Payload(data: JsValue, target: String)
 object Payload {
-  implicit val payloadWrites = Json.writes[Payload]
+  implicit val payloadFormat = Json.format[Payload]
 }

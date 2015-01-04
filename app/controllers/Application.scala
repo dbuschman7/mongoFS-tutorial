@@ -1,9 +1,7 @@
 package controllers
 
 import java.util.UUID
-
 import scala.concurrent.Future
-
 import akka.actor.{ Props, actorRef2Scala }
 import me.lightspeed7.mongoFS.tutorial.Actors.{ Listener, Load, Loader }
 import play.api.libs.EventSource
@@ -12,6 +10,7 @@ import play.api.libs.iteratee.{ Concurrent, Enumeratee }
 import play.api.libs.json.JsValue
 import play.api.mvc.{ Action, AnyContent, Controller }
 import play.libs.Akka
+import akka.actor.PoisonPill
 
 object Application extends Controller {
 
@@ -31,7 +30,12 @@ object Application extends Controller {
       val listener = Akka.system.actorOf(Props(classOf[Listener], uuid, channel))
 
       def connDeathWatch(addr: String): Enumeratee[JsValue, JsValue] =
-        Enumeratee.onIterateeDone { () => println(addr + " - SSE disconnected") }
+        Enumeratee.onIterateeDone { () =>
+          {
+            println(addr + " - SSE disconnected")
+            listener ! PoisonPill
+          }
+        }
 
       val result =
         Ok.feed(out
