@@ -1,8 +1,9 @@
 // package default
 
-import me.lightspeed7.mongoFS.tutorial.image.ImageService
-import play.api.{ Application, GlobalSettings }
 import me.lightspeed7.mongoFS.tutorial.file.FileService
+import me.lightspeed7.mongoFS.tutorial.image.ImageService
+import play.api.Application
+import play.api.GlobalSettings
 
 object Global extends GlobalSettings {
 
