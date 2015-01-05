@@ -1,4 +1,4 @@
-package me.lightspeed7.mongoFS.tutorial
+package me.lightspeed7.mongoFS.tutorial.image
 
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -13,8 +13,6 @@ import com.mongodb.BasicDBObject
 import akka.actor.{ Actor, ActorRef, ActorSystem, PoisonPill, Props, actorRef2Scala }
 import akka.event.{ ActorEventBus, LookupClassification }
 import akka.routing.RoundRobinPool
-import me.lightspeed7.mongoFS.tutorial.image.{ ImageService, Payload, StatsData, ThumbnailService, UiImage }
-import me.lightspeed7.mongoFS.tutorial.image.Image
 import me.lightspeed7.mongoFS.tutorial.image.Image.fromMongoDB
 import me.lightspeed7.mongoFS.tutorial.image.UiImage.fromImage
 import me.lightspeed7.mongofs.MongoFile
@@ -91,9 +89,9 @@ object Actors {
     }
 
     override def postStop() {
-      if (cancellable != null) {
-        cancellable.cancel
-      }
+      //      if (cancellable != null) {
+      //        cancellable.cancel
+      //      }
       EventBus.unsubscribe(self, "payload")
       super.postStop()
       println(s"Listener ShutDown - ${name}, path - ${self.path}")

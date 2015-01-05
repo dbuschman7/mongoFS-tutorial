@@ -1,4 +1,4 @@
-@(title: String, activeTab:String )(content: Html)
+@(title: String, appName:String )(content: Html)
 <!DOCTYPE html>
 <html>
 <head>
@@ -68,7 +68,7 @@
 	
 </head>
 
-<body ng-app="tutorial"> 
+<body ng-app="@appName"> 
 
 <script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular.min.js"))"></script>
 <script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular-route.min.js"))"></script>

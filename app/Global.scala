@@ -2,6 +2,7 @@
 
 import me.lightspeed7.mongoFS.tutorial.image.ImageService
 import play.api.{ Application, GlobalSettings }
+import me.lightspeed7.mongoFS.tutorial.file.FileService
 
 object Global extends GlobalSettings {
 
@@ -11,6 +12,9 @@ object Global extends GlobalSettings {
 
     ImageService.setHostUrl(dbUri)
     ImageService.dumpConfig
+
+    FileService.setHostUrl(dbUri)
+    FileService.dumpConfig
   }
 
   override def onStop(app: Application) {

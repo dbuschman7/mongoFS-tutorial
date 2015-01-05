@@ -132,10 +132,10 @@ object ImageService {
   // ////////////////////////////////
   private[image] def init(): MongoDatabase = {
     val uri = new MongoClientURI(hostUrl)
-    println("Mongo Connection - standing up ...")
+    println("Mongo Connection(images) - standing up ...")
     val client = new MongoClient(uri);
     val db = new MongoDatabase(client.getDB(uri.getDatabase()));
-    println("Mongo Connection - ready!")
+    println("Mongo Connection(images) - ready!")
     db
   }
 

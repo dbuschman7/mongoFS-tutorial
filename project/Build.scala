@@ -54,7 +54,7 @@ object ApplicationBuild extends Build {
     
     // Image file support
     "org.mongodb" % "mongo-java-driver" % "2.12.4",
-    "me.lightspeed7" % "mongoFS" % "0.9.1",
+    "me.lightspeed7" % "mongoFS" % "0.9.2",
     "org.webjars" % "angular-file-upload" % "2.0.5",
 
     // image support

@@ -1,15 +1,23 @@
-var app = angular.module('tutorial', ['angularFileUpload','tutorial.controllers']);
-
-
+var app = angular.module('files', ['angularFileUpload','files.controllers']);
 
 //File Upload
 app.controller('FileUpload', [ '$scope', '$upload', function($scope, $upload) {
 	  $scope.myFiles = []
+		
+	  $scope.gzip = true
+	  $scope.encrypted = true
+	  $scope.expand = false
+		
 	  $scope.$watch('myFiles', function() {
+
+		var base = $scope.expand ? "expand":  "upload";
+	    var path = '/files/' + base + '/' + $scope.gzip + '/' + $scope.encrypted;
+	    console.log('Path = ' + path);
+	      
 	    for (var i = 0; i < $scope.myFiles.length; i++) {
 	      var file = $scope.myFiles[i];
 	      $scope.upload = $upload.upload({
-	        url: '/upload', // upload.php script, node.js route, or servlet url
+	        url: path, 
 	        method: 'PUT', //'POST' or 
 	        //headers: {'Authorization': 'xxx'}, // only for html5
 	        //withCredentials: true,

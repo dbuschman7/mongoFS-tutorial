@@ -1,30 +1,25 @@
 package controllers
 
 import java.io.{ InputStream, OutputStream }
+
 import scala.compat.Platform
 import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
+
 import akka.actor.{ PoisonPill, Props, actorRef2Scala }
-import me.lightspeed7.mongoFS.tutorial.file.Actors.{ Listener, Load, Loader }
-import me.lightspeed7.mongoFS.tutorial.file.FileService
+import me.lightspeed7.mongoFS.tutorial.image.Actors.{ CreateImage, Listener, Load, Loader, thumbnailers }
+import me.lightspeed7.mongoFS.tutorial.image.ImageService
 import me.lightspeed7.mongofs.{ MongoFile, MongoFileWriter }
 import play.Logger
 import play.api.http.MimeTypes
 import play.api.libs.EventSource
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.{ Concurrent, Enumeratee, Enumerator, Iteratee }
 import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.{ Action, BodyParsers, Controller, MultipartFormData, ResponseHeader, Result }
 import play.libs.Akka
-import me.lightspeed7.mongoFS.tutorial.file.UiFile
-import me.lightspeed7.mongoFS.tutorial.image.Payload
-import me.lightspeed7.mongoFS.tutorial.file.Actors._
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
-import me.lightspeed7.mongofs.MongoManifest
-import java.util.concurrent.atomic.AtomicBoolean
-import java.io.FileInputStream
 
-object MongoFS extends Controller {
+object ImageFS extends Controller {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -61,10 +56,10 @@ object MongoFS extends Controller {
 
   }
 
-  def download(uuid: String) = Action.async { request =>
+  def download(size: String, uuid: String) = Action.async { request =>
 
     Future {
-      val input: Try[(Long, String, InputStream)] = FileService.inputStreamForURL(uuid)
+      val input: Try[(Long, String, InputStream)] = ImageService.inputStreamForURL(uuid, size)
 
       input match {
         case Success((length, media, is)) => {
@@ -79,43 +74,8 @@ object MongoFS extends Controller {
     }
   }
 
-  def expand(gzip: Boolean, encrypted: Boolean) = Action.async { request =>
-    request.body.asMultipartFormData.map { part =>
-      part.files.foreach { file =>
-        val contentType = file.contentType
-        val filename = file.filename
-
-        val tempFile = file.ref.file
-        println(tempFile.getCanonicalPath)
-        val in = new FileInputStream(tempFile)
-        try {
-          val mfw = FileService.createNew(filename, contentType.get, gzip, encrypted).get
-          val manifest = mfw.uploadZipFile(in)
-
-          import scala.collection.JavaConversions._
-          val files = manifest.getFiles
-          files.foreach { file =>
-            val file = mfw.getMongoFile
-            println(s"MongoFile - ${file.getURL.toString()}")
-            statistics ! file
-            updater ! file
-          }
-        } catch {
-          case e: Exception => {
-            println(e.getMessage)
-            e.printStackTrace()
-          }
-        }
-
-      }
-
-    }
-
-    Future(Ok("Success"))
-  }
-
-  def upload(gzip: Boolean, encrypted: Boolean) =
-    Action(parse.multipartFormData(handleFilePartToMongo(gzip, encrypted))) {
+  def upload() =
+    Action(parse.multipartFormData(handleFilePartToMongo)) {
       request =>
         {
           val accept: String = request.headers.get("Accept").getOrElse(MimeTypes.JSON) match {
@@ -132,9 +92,6 @@ object MongoFS extends Controller {
                   val uploadStart: Long = file.get("start").toString().toLong
                   file.put("start", null) // clear it out
                   start = Math.min(start, uploadStart) // find the first file to upload
-
-                  statistics ! file
-                  updater ! file
                 }
             }
 
@@ -154,7 +111,7 @@ object MongoFS extends Controller {
         }
     }
 
-  def handleFilePartToMongo(gzip: Boolean, encrypted: Boolean): BodyParsers.parse.Multipart.PartHandler[MultipartFormData.FilePart[MongoFile]] =
+  def handleFilePartToMongo: BodyParsers.parse.Multipart.PartHandler[MultipartFormData.FilePart[MongoFile]] =
     parse.Multipart.handleFilePart {
       case parse.Multipart.FileInfo(partName, filename, contentType) =>
 
@@ -166,20 +123,21 @@ object MongoFS extends Controller {
         }
 
         // simply write the data straight to MongoDB as a mongoFS file
-        val f = FileService.createNew(filename, contentType.get, gzip, encrypted)
+        val f = ImageService.createNew(filename, contentType.get)
         val mongoFileWriter: MongoFileWriter = f.get
-        val out: OutputStream = f.get.getOutputStream
 
-        Iteratee.fold[Array[Byte], OutputStream](out) { (out, data) =>
-          out.write(data)
-          out
-        }.map { out =>
-          out.close()
-          val file = setStartTime(mongoFileWriter.getMongoFile())
-          file
-        }
+        Iteratee.fold[Array[Byte], OutputStream](
+          mongoFileWriter.getOutputStream()) { (os, data) =>
+            os.write(data)
+            os
+          }.map { os =>
+            os.close()
+            val file = setStartTime(mongoFileWriter.getMongoFile())
+            thumbnailers ! CreateImage(file)
+            file
+          }
     }
 
 }
 
-class MongoFS {}
+class ImageFS {}

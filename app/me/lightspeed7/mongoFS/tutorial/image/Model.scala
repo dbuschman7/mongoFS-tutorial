@@ -1,12 +1,16 @@
 package me.lightspeed7.mongoFS.tutorial.image
 
+import java.util.Date
+
+import scala.util.Try
+
 import org.bson.types.ObjectId
+
 import com.mongodb.DBObject
-import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants }
+
+import me.lightspeed7.mongofs.MongoFileConstants
 import me.lightspeed7.mongofs.url.MongoFileUrl
 import play.api.libs.json.{ Format, JsError, JsString, JsSuccess, JsValue, Json }
-import java.util.Date
-import scala.util.Try
 
 //
 // Image Model in MongoDB

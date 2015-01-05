@@ -1,0 +1,86 @@
+@(uuid: String) @layout(title = "Files", appName = "files") {
+
+<section>
+	<div class="row" data-ng-controller="FilesController"
+		data-ng-init="startSocket('@uuid')">
+		<div
+			class="col-xs-12 col-sm-10 col-sm-offset-1 col-md-offset-1 col-lg-offset-1">
+			<div>
+				<h3>File Upload Tutorial</h3>
+			</div>
+
+			<div class="border container fill">
+				<div class="panel-body" id="file">
+					<div class="pull-left col-xs-12 col-sm-9 border"  >
+						<table class="col-xs-12">
+						    <thead>
+						        <tr>
+						            <th class="text-left">Filename</th>
+						            <th class="text-center">Content Type</th>
+						            <th class="text-right">File Size</th>
+						            <th class="text-right">Storage Size</th>
+						            <th class="text-center">Format</th>
+						            <th class="text-right">Ratio</th>
+						        </tr>
+						    </thead>
+							<tbody>
+							<tr data-ng-repeat="file in files" class="col-xs-12">
+								<td class="text-left">{{file.fileName}}</td> 
+								<td class="test-center">{{file.contentType}}</td> 
+								<td class="text-right">{{file.size | number : 0 }}</td> 
+								<td class="text-right">{{file.storage | number : 0 }}</td> 
+								<td class="text-center">{{file.format}}</td> 
+								<td class="text-right">{{file.storage / file.size  * 100 | number : 2 }} %</td> 
+							</tr>
+							</tbody>
+						</table>
+
+					</div>
+					<div class="col-xs-12 col-sm-3 border">
+						<h4>Metrics</h4>
+						<strong>File Count</strong><br/>
+						<p class="panel-warning text-right padded" >{{fileCount | number : 0 }} files</p>
+						<strong>Size</strong><br/>
+						<p class="panel-warning text-right padded" >{{imageBytes | number : 1 }} MB</p>
+						<strong>Storage</strong><br/>
+						<p class="panel-warning text-right padded" >{{storageBytes | number : 1 }} MB</p>
+						<strong>Ratio</strong><br/>
+						<p class="panel-warning text-right padded" >{{storageBytes / imageBytes * 100 | number : 2 }} %</p>
+
+						<hr />
+						<div class="col-xs-12" ng-controller="FileUpload">
+							<form class="container form-horizontal" name="checkBoxForm" >
+								<div class="form-group">
+									<label class="checkbox pull-left"><input type="checkbox" ng-model="gzip"/>Gzipped</label>
+									<label class="checkbox pull-right"><input type="checkbox" ng-model="encrypted"/>Encrypted</label>
+								</div>
+								<div class="form-group">
+									<label class="checkbox"><input type="checkbox" ng-model="expand"/>Zip Expand</label>
+								</div>
+							</form>
+
+							<div ng-file-drop ng-model="myFiles" class="drop-box"
+								drag-over-class="{accept:'dragover', reject:'dragover-err', delay:100}"
+								ng-multiple="true" allow-dir="true" accept="*/*"
+								ng-file-change="upload(files)">Drop Images here</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	</div>
+</section>
+
+<script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular-file-upload-shim.min.js"))"></script>
+<script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular-file-upload.min.js"))"></script>
+
+<script src="@routes.Assets.at("javascripts/files_app.js")"></script>
+<script src="@routes.Assets.at("javascripts/files_controllers.js")"></script>
+
+
+}
+
+

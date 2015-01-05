@@ -1,4 +1,4 @@
-angular.module('tutorial.controllers', ['ui.bootstrap'])
+angular.module('images.controllers', ['ui.bootstrap'])
 
 .controller(
 		'ImageController',
@@ -47,7 +47,7 @@ angular.module('tutorial.controllers', ['ui.bootstrap'])
 			$scope.startSocket = function(uuid) {
 				$scope.stopSocket();
 				$scope.images = [];
-				var url = "/sse/" + uuid
+				var url = "/images/sse/" + uuid
 				console.log(url);
 				$scope.socket = new EventSource(url);
 				$scope.socket.addEventListener("message",
