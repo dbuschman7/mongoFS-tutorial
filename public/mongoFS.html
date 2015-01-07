@@ -120,22 +120,42 @@
 					<h2>mongoFS - Mechanism</h2>
 					<div>
 						&lt;bucket&gt;.files example<br>
-						<pre>
-							<code class="json" data-trim>
-// Files snippet here								
-</code>
-						</pre>
+						<pre><code class="json" data-trim>
+{
+    "_id" : ObjectId("54aa99eddbb0706fdbd1f669"),
+    "uploadDate" : ISODate("2015-01-05T14:04:29.815Z"),
+    "chunkSize" : NumberLong(130360),
+    "filename" : "mlclass-ex1-007.zip",
+    "contentType" : "application/zip",
+    "format" : "enc",
+    "chunkCount" : 4,
+    "length" : NumberLong(483724),
+    "md5" : "0efcc004ba101eb9e10a2d05873c0a2b",
+    "storage" : NumberLong(483984),
+    "ratio" : 1.000537496588964
+}
+</code></pre>
 					</div>
 				</section>
 				<section>
 					<h2>mongoFS - Mechanism</h2>
 					<div>
 						&lt;bucket&gt;.chunks example<br>
-						<pre>
-							<code class="json" data-trim>
-// Chunks snippet here								
-</code>
-						</pre>
+						<pre><code class="json" data-trim>
+{
+    "_id" : ObjectId("54aa99eddbb0706fdbd1f66c"),
+    "files_id" : ObjectId("54aa99eddbb0706fdbd1f669"),
+    "n" : 2,
+    "sz" : 130360,
+    "data" : { "$binary" : "b30L/P/Intlkk ... PD8lZjdQ==", "$type" : "00" }
+},
+{
+    "_id" : ObjectId("54aa99eddbb0706fdbd1f66d"),
+    "files_id" : ObjectId("54aa99eddbb0706fdbd1f669"),
+    "n" : 3,
+    "sz" : 92904,
+    "data" : { "$binary" : "04t4cWuPRyu ... F2f+hxsJ+", "$type" : "00" }
+}</code></pre>
 					</div>
 				</section>
 			</section>
@@ -151,58 +171,69 @@
 						<li class="fragment ">filenames are <b>NOT</b> unique.
 						</li>
 						<li class="fragment ">Existing requirement from GridFS, have to maintain compatibility.</li>
-						<li class="fragment ">URL is provided, protocol is 'mongofile'<br> <pre>
-							<code class="text" data-trim>
-// URL snippet here								
-</code>
-							</pre>
+						<li class="fragment ">URL is provided, protocol is 'mongofile'<br> 
+						<pre><code class="text" data-trim>
+mongofile:gz:/mypath/fileName.pdf?52fb1e7b36707d6d13ebfda9#application/pdf
+</code></pre>
 						</li>
 						<li class="fragment ">Store the URL for future reference and fetching the file data</li>
-						<li class="fragment ">MongoFile Example <br> <pre>
-							<code class="java" data-trim>
-// MongFileUrl snippet here								
-</code>
-							</pre>
+						<li class="fragment ">MongoFile Example <br> 
+						<pre><code class="java" data-trim>
+MongoFileUrl mongoFileUrl = mongoFile.getURL();
+URL url = file.getURL();  
+String storedSomewhereElse = url.toString();
+MongoFileUrl url = MongoFileUrl.construct(storedSomewhereElse);							
+</code></pre>
 						</li>
 					</ul>
 				</section>
 				<section>
 					<h2>mongoFS - Objects</h2>
 					<ul>
-						<li class="fragment ">MongoFileStore - the main class you need to access the files<br> <pre>
-							<code class="java" data-trim>
-// MongFileStore snippet here								
-</code>
-							</pre>
+						<li class="fragment ">MongoFileStore - the main class you need to access the files<br>
+						<pre><code class="java" data-trim>
+MongoClient client =  ...
+MongoFileStore store = new MongoFileStore(client.getDB(DB_NAME), config);							
+</code></pre>
 						</li>
-						<li class="fragment ">MongoFile - a single file instance to a file ready to read from<pre>
-							<code class="java" data-trim>
-// MongFile snippet here								
-</code>
-							</pre>
+						<li class="fragment ">MongoFile - a single file instance to read from
+						<pre><code class="java" data-trim>
+MongoFileUrl url = MongoFileUrl.construct("mongofile:gz: ...");
+MongoFile mongoFile = store.findOne(url); 							
+</code></pre>
 						</li>
-						<li class="fragment ">MongoFileWriter - created by the store when creating new files<pre>
-							<code class="java" data-trim>
-// MongFileWriter snippet here								
-</code>
-							</pre>
+						<li class="fragment ">MongoFileWriter - when creating new files
+						<pre><code class="java" data-trim>
+InputStream in = new ByteArrayInputStream(LOREM_IPSUM.getBytes())
+MongoFileWriter writer = store.createNew("README.md", "text/plain", true);
+try (OutputStream out = writer.getOutputStream()) {
+   new BytesCopier(in, out).transfer(true);
+}
+MongoFile file = writer.getMongoFile();						
+</code></pre>
 						</li>
 					</ul>
 				</section>
 				<section>
 					<h2>mongoFS - Configuration</h2>
 					<ul>
-						<li class="fragment ">Builder pattern<br> <pre>
-							<code class="java" data-trim>
-// MongFileConfig builder snippet here								
-</code>
-							</pre>
+						<li class="fragment ">Builder pattern<br> 
+						<pre><code class="java" data-trim>
+MongoFileStoreConfig config = MongoFileStoreConfig.builder() 
+        .bucket("bucket") // WARN: required 
+        .chunkSize(ChunkSize.medium_256K) // default
+        .enableCompression(true) //  default
+        .enableEncryption(new BasicCrypto())  // default == null
+        .writeConcern(WriteConcern.SAFE) // default
+        .readPreference(ReadPreference.primary()) // default
+        .build(); // generate the configuration								
+</code></pre>
 						</li>
-						<li class="fragment ">GridFS compatiable mode<br> <pre>
-							<code class="java" data-trim>
-// MongFileConfig GRIDFS snippet here								
-</code>
-							</pre>
+						<li class="fragment ">GridFS compatible mode<br> 
+						<pre><code class="java" data-trim>
+MongoFileStoreConfig config = MongoFileStoreConfig.builder() //
+                                    .gridFSCompatible("test");
+</code></pre>
 						</li>
 					</ul>
 				</section>
@@ -217,19 +248,23 @@
 					<h2>mongoFS - Asynchronous</h2>
 					<p>&nbsp;</p>
 					<ul>
-						<li>By its nature - the mongo-java-driver is not asynchronous</li>
-						<li class="fragment ">Java 8 Futures anyone?</li>
-						<li class="fragment ">Reading files - Play Enumerators<br> <pre>
-							<code class="scala" data-trim>
-// Enumerator snippet here								
-</code>
-							</pre>
+						<li class="fragment ">Java 8 Futures - anyone ?</li>
+						<li class="fragment ">Reading files - Play Enumerators<br> 
+						<pre><code class="scala" data-trim>
+val file = imageFS.findOne(url)
+val enum = Enumerator.fromStream(file.getInputStream)
+</code></pre>
 						</li>
-						<li class="fragment ">Writing file - Play Iteratees<br> <pre>
-							<code class="scala" data-trim>
-// Iteratee snippet here								
-</code>
-							</pre>
+						<li class="fragment ">Writing file - Play Iteratees<br> 
+						<pre><code class="scala" data-trim>
+val f = ImageService.createNew(filename, contentType.get)
+f.map { writer =>
+  val out = writer.getOutputStream()
+  Iteratee.fold[Array[Byte], OutputStream](out) { (os, data) =>
+    os.write(data); os
+  }.map { os => os.close(); writer.getMongoFile() }
+}.getOrElse(null)
+</code></pre>
 						</li>
 						<li class="fragment">Reactive-Streams - http://www.reactive-streams.org/</li>
 						<li class="fragment">Join me on Jan 28th, here at Galvanize to see an example</li>
@@ -246,13 +281,13 @@
 				    <li>https://github.com/dbuschman7/mongoFS-tutorial</li>
 					<li>Play - 2.3.7</li>
 					<li>Scala - 2.11.1</li>
-					<li>AngularJs - 1.2.23</li>
+					<li>AngularJS - 1.2.23</li>
 					<li>Bootstrap - 3.2.0</li>
 					<li>mongo-java-driver - 2.12.4</li>
 					<li>mongoFS - 0.9.2</li>
 					<li>Akka - 2.3.4</li>
 					<li>2 apps - Images and Files</li>
-					<li>Lets' <a href="/files" target="_new">go</a>
+					<li>Ready, Set, <a href="/files" target="_new">Go!</a>
 				</ul>
 			</section>
 

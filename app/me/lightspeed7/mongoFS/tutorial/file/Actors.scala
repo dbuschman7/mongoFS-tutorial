@@ -30,7 +30,7 @@ object Actors {
   case class Load(listener: ActorRef)
   case class MessageEvent(channel: String, payload: Payload)
 
-  private val Tick = "tick" // scheduler tick
+  val Tick = "tick" // scheduler tick
 
   //
   // Message Bus
@@ -88,8 +88,7 @@ object Actors {
   class Statistics(name: String) extends Actor {
 
     def receive = {
-      case m: MongoFile => {
-        Statistics.accumulate(m)
+      case Tick => {
         val payload = Payload(Json.toJson(Statistics.generate()), "statistics")
         EventBus.publish(MessageEvent("payload", payload))
       }
@@ -113,7 +112,7 @@ object Actors {
     private var totalFiles: AtomicLong = new AtomicLong(0)
 
     def generate(): StatsData = {
-      StatsData(totalFiles.get, totalBytes.get, totalStorage.get)
+      FileService.generateStats()
     }
 
     def accumulate(m: MongoFile) = {
@@ -135,6 +134,8 @@ object Actors {
         val current: UiFile = m // implicit conversion of - Image.fromMongoDB(obj)
         val payload = Payload(Json.toJson(current), "file") // send only to one UI
         EventBus.publish(MessageEvent("payload", payload))
+
+        statistics ! Tick
       }
     }
   }
@@ -151,11 +152,11 @@ object Actors {
         val list = FileService.list(new Document("ts", -1))
 
         list.foreach { obj =>
-          statistics ! obj
 
           val current: UiFile = obj // implicit conversion of - Image.fromMongoDB(obj)
           listener ! Payload(Json.toJson(current), "file") // send only to one UI
         }
+        statistics ! Tick
 
         self ! PoisonPill
       }

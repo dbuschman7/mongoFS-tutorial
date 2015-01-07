@@ -1,18 +1,21 @@
 package me.lightspeed7.mongoFS.tutorial.file
 
 import java.io.{ FileNotFoundException, InputStream }
-
 import scala.util.{ Failure, Success, Try }
-
 import org.bson.types.ObjectId
 import org.mongodb.{ Document, MongoDatabase }
-
 import com.mongodb.{ MongoClient, MongoClientURI, WriteConcern }
-
 import me.lightspeed7.mongoFS.tutorial.file.UiFile.fromMongoDB
 import me.lightspeed7.mongofs.{ MongoFileStore, MongoFileStoreConfig, MongoFileWriter }
 import me.lightspeed7.mongofs.crypto.BasicCrypto
 import me.lightspeed7.mongofs.util.ChunkSize
+import org.mongodb.MongoCollection
+import com.mongodb.ReadPreference
+import com.mongodb.DBCollection
+import com.mongodb.DBObject
+import java.util.ArrayList
+import com.mongodb.BasicDBObject
+import me.lightspeed7.mongoFS.tutorial.image.StatsData
 
 object FileService {
 
@@ -24,6 +27,8 @@ object FileService {
   private lazy val ftMongoFS: MongoFileStore = buildStore(baseName, false, true, ChunkSize.medium_128K)
   private lazy val tfMongoFS: MongoFileStore = buildStore(baseName, true, false, ChunkSize.medium_128K)
   private lazy val ttMongoFS: MongoFileStore = buildStore(baseName, true, true, ChunkSize.medium_128K)
+
+  private lazy val filesColl: DBCollection = buildFilesCollection(baseName)
 
   var hostUrl: String = _
 
@@ -53,6 +58,35 @@ object FileService {
     f.iterator()
   }
 
+  def generateStats(): StatsData = {
+    // (files:Long, bytes:Long, storage:long)
+    //    db.files.files.aggregate([
+    //  { $project : { '_id': 1, 'length': 1, 'storage':1 } },
+    //  { $group : { _id: 1, count : { $sum :  1 }, 'length' : { $sum :  '$length' }, 'storage' : { $sum :  '$storage' } } }
+    //])
+
+    var pipeline = new ArrayList[DBObject]()
+    pipeline.add(new BasicDBObject("$project", new BasicDBObject("_id", 1).append("length", 1).append("storage", 1)))
+
+    val group = new BasicDBObject("_id", 1) //
+      .append("count", new BasicDBObject("$sum", 1))
+      .append("length", new BasicDBObject("$sum", "$length"))
+      .append("storage", new BasicDBObject("$sum", "$storage"))
+    pipeline.add(new BasicDBObject("$group", group))
+
+    val result = filesColl.aggregate(pipeline)
+
+    val iter = result.results().iterator()
+    if (iter.hasNext()) {
+      val cur = iter.next()
+      val count = cur.get("count").asInstanceOf[Integer]
+      val length = cur.get("length").asInstanceOf[Long]
+      val storage = cur.get("storage").asInstanceOf[Long]
+      StatsData(count.longValue(), length, storage)
+    } else {
+      StatsData(0, 0, 0)
+    }
+  }
   //
   // MongoFS create file
   // ////////////////////////////
@@ -97,6 +131,13 @@ object FileService {
       .build();
 
     new MongoFileStore(db, config)
+  }
+
+  private[file] def buildFilesCollection(bucketName: String): DBCollection = {
+    val coll = db.getSurrogate.getCollection(baseName + ".files")
+    coll.setReadPreference(ReadPreference.primaryPreferred())
+    coll.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+    coll
   }
 
   def dumpConfig: Unit = {

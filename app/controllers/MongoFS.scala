@@ -1,28 +1,24 @@
 package controllers
 
-import java.io.{ InputStream, OutputStream }
+import java.io.{ FileInputStream, InputStream, OutputStream }
+
+import scala.collection.JavaConversions.asScalaBuffer
 import scala.compat.Platform
 import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
+
 import akka.actor.{ PoisonPill, Props, actorRef2Scala }
-import me.lightspeed7.mongoFS.tutorial.file.Actors.{ Listener, Load, Loader }
+import me.lightspeed7.mongoFS.tutorial.file.Actors.{ Listener, Load, Loader, statistics, updater }
 import me.lightspeed7.mongoFS.tutorial.file.FileService
 import me.lightspeed7.mongofs.{ MongoFile, MongoFileWriter }
 import play.Logger
 import play.api.http.MimeTypes
 import play.api.libs.EventSource
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.{ Concurrent, Enumeratee, Enumerator, Iteratee }
 import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.{ Action, BodyParsers, Controller, MultipartFormData, ResponseHeader, Result }
 import play.libs.Akka
-import me.lightspeed7.mongoFS.tutorial.file.UiFile
-import me.lightspeed7.mongoFS.tutorial.image.Payload
-import me.lightspeed7.mongoFS.tutorial.file.Actors._
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
-import me.lightspeed7.mongofs.MongoManifest
-import java.util.concurrent.atomic.AtomicBoolean
-import java.io.FileInputStream
 
 object MongoFS extends Controller {
 
@@ -93,11 +89,9 @@ object MongoFS extends Controller {
           val manifest = mfw.uploadZipFile(in)
 
           import scala.collection.JavaConversions._
-          val files = manifest.getFiles
+          val files = manifest.getFiles :+ manifest.getZip
           files.foreach { file =>
-            val file = mfw.getMongoFile
             println(s"MongoFile - ${file.getURL.toString()}")
-            statistics ! file
             updater ! file
           }
         } catch {

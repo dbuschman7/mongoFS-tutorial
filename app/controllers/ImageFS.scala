@@ -124,18 +124,19 @@ object ImageFS extends Controller {
 
         // simply write the data straight to MongoDB as a mongoFS file
         val f = ImageService.createNew(filename, contentType.get)
-        val mongoFileWriter: MongoFileWriter = f.get
-
-        Iteratee.fold[Array[Byte], OutputStream](
-          mongoFileWriter.getOutputStream()) { (os, data) =>
-            os.write(data)
-            os
+        f.map { writer =>
+          val out = writer.getOutputStream()
+          Iteratee.fold[Array[Byte], OutputStream](out) { (os, data) =>
+            os.write(data); os
           }.map { os =>
             os.close()
-            val file = setStartTime(mongoFileWriter.getMongoFile())
+            val file = setStartTime(writer.getMongoFile())
             thumbnailers ! CreateImage(file)
             file
           }
+
+        }.getOrElse(null)
+
     }
 
 }

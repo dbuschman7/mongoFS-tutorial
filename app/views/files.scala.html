@@ -21,6 +21,7 @@
 						            <th class="text-right">Storage Size</th>
 						            <th class="text-center">Format</th>
 						            <th class="text-right">Ratio</th>
+						            <th cladd="text-right">&nbsp;&nbsp;Download</th>
 						        </tr>
 						    </thead>
 							<tbody>
@@ -30,7 +31,14 @@
 								<td class="text-right">{{file.size | number : 0 }}</td> 
 								<td class="text-right">{{file.storage | number : 0 }}</td> 
 								<td class="text-center">{{file.format}}</td> 
-								<td class="text-right">{{file.storage / file.size  * 100 | number : 2 }} %</td> 
+								<td class="text-right">{{file.storage / file.size  * 100 | number : 2 }} %</td>
+								<td>   
+									<a class="pull-right" target="_self" ng-show="file.size > 0"
+											href="/files/download/{{file.id}}" download="{{file.fileName}}">
+									<span class="glyphicon glyphicon-download-alt" aria-hidden="true">
+									</span>
+									</a></td>
+	 				        
 							</tr>
 							</tbody>
 						</table>

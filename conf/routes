@@ -24,4 +24,5 @@ GET   /files/download/:uuid  			controllers.MongoFS.download(uuid:String)
 GET   /assets/*file          controllers.Assets.at(path="/public", file)
 GET   /webjars/*file         controllers.WebJarAssets.at(file)
 
-GET   /present/*file			 controllers.Assets.at(path="/public", file)
+# Presentations
+GET   /present/*file		 controllers.Assets.at(path="/public", file)
