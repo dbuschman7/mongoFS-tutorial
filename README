@@ -4,12 +4,13 @@ mongoFS-tutorial
 A example app showing the use of MongoFS and the Mongo-Java-Driver in a reactive way.
 
 This project uses - 
-* Websockets ( actually SSEs )
-* Angular.js 
-* Play 2.3.x
-* MongoDB 2.6.x
-* MongoFS 0.9.x 
-* Mongo-Java-Driver 2.13.x
-* Akka Actors 
-* Bootstrap 3
+* Play - 2.3.7</li>
+* Scala - 2.11.1</li>
+* AngularJS - 1.2.23</li>
+* Bootstrap - 3.2.0</li>
+* mongo-java-driver - 2.12.4</li>
+* mongoFS - 0.9.2</li>
+* Akka - 2.3.4</li>
+* 2 apps - Images and Files</li>
+* Websockets ( actually SSE )
 
