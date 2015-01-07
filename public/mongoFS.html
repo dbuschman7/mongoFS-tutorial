@@ -39,13 +39,15 @@
 		<!-- Any section element inside of this container is displayed as a slide -->
 		<div class="slides">
 			<section>
+				<h3>&nbsp;</h3>
 				<h1>mongoFS</h1>
-				<h1>&nbsp;</h1>
+				<h3>&nbsp;</h3>
 				<h3>Denver MongoDB User Group Meetup</h3>
-				<h3>January 7th, 2015</h3>
-				<p>
-					<small>Created by David Buschman ( GitHub - dbuschman7 )</small>
-				</p>
+				<p>David Buschman</p>
+				<p>January 7th, 2015</p>
+				<p>Github - dbuschman7</p>
+				<p>&nbsp;</p>
+				<p>https://github.com/dbuschman7/mongoFS-tutorial</p>				
 			</section>
 
 			<section id="fragments">
@@ -80,6 +82,7 @@
 								<li class="fragment ">Temporary files and files expiration</li>
 								<li class="fragment ">Zip Archive Expansion upon upload</li>
 							</ul>
+						</li>
 					</ul>
 				</section>
 
@@ -168,9 +171,9 @@
 				<section>
 					<h2>mongoFS - Reference</h2>
 					<ul>
-						<li class="fragment ">filenames are <b>NOT</b> unique.
-						</li>
+						<li class="fragment ">filenames are <b>NOT</b> unique.</li>
 						<li class="fragment ">Existing requirement from GridFS, have to maintain compatibility.</li>
+						<li class="fragment ">MongoFiles are immutable</li>
 						<li class="fragment ">URL is provided, protocol is 'mongofile'<br> 
 						<pre><code class="text" data-trim>
 mongofile:gz:/mypath/fileName.pdf?52fb1e7b36707d6d13ebfda9#application/pdf
@@ -180,7 +183,7 @@ mongofile:gz:/mypath/fileName.pdf?52fb1e7b36707d6d13ebfda9#application/pdf
 						<li class="fragment ">MongoFile Example <br> 
 						<pre><code class="java" data-trim>
 MongoFileUrl mongoFileUrl = mongoFile.getURL();
-URL url = file.getURL();  
+URL url = mongoFileUrl.getURL();  
 String storedSomewhereElse = url.toString();
 MongoFileUrl url = MongoFileUrl.construct(storedSomewhereElse);							
 </code></pre>
@@ -257,7 +260,7 @@ val enum = Enumerator.fromStream(file.getInputStream)
 						</li>
 						<li class="fragment ">Writing file - Play Iteratees<br> 
 						<pre><code class="scala" data-trim>
-val f = ImageService.createNew(filename, contentType.get)
+val f : Option[MogoFileWriter] = ImageService.createNew(filename, contentType.get)
 f.map { writer =>
   val out = writer.getOutputStream()
   Iteratee.fold[Array[Byte], OutputStream](out) { (os, data) =>
