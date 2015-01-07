@@ -9,7 +9,7 @@ object Global extends GlobalSettings {
 
   override def onStart(app: Application) {
 
-    val dbUri = Option(System.getenv("MONGOHQ_URL")).getOrElse("mongodb://localhost:27017/playground")
+    val dbUri = Option(System.getenv("MONGOHQ_URL")).getOrElse("mongodb://localhost:27017/mongoFS")
 
     ImageService.setHostUrl(dbUri)
     ImageService.dumpConfig
