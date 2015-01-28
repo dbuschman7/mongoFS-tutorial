@@ -24,15 +24,15 @@ angular.module('images.controllers', ['ui.bootstrap'])
 					if (target == "image") {
 						var img = {
 							id : data.id,	
-							tooltip : data.tooltip,
 							description : data.description,
+							tooltip : data.tooltip,
 							fileName : data.fileName,
 							size : data.size / 1024,
 							storage: data.storage / 1024,
 							format: data.format,
 							contentType : data.contentType
 						}
-						console.log("thumb - " + img.src);
+						console.log("thumb - " + img.id);
 						$scope.images.unshift(img);
 					} else if (target == "statistics") {
 						$scope.fileCount = data.files;

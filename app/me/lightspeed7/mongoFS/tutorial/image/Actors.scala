@@ -3,13 +3,10 @@ package me.lightspeed7.mongoFS.tutorial.image
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
-
 import scala.collection.JavaConversions.asScalaIterator
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
-
 import com.mongodb.BasicDBObject
-
 import akka.actor.{ Actor, ActorRef, ActorSystem, PoisonPill, Props, actorRef2Scala }
 import akka.event.{ ActorEventBus, LookupClassification }
 import akka.routing.RoundRobinPool
@@ -20,6 +17,7 @@ import me.lightspeed7.mongofs.url.MongoFileUrl
 import play.Play
 import play.api.libs.iteratee.Concurrent
 import play.api.libs.json.{ JsValue, Json }
+import org.mongodb.Document
 
 object Actors {
 
@@ -89,9 +87,6 @@ object Actors {
     }
 
     override def postStop() {
-      //      if (cancellable != null) {
-      //        cancellable.cancel
-      //      }
       EventBus.unsubscribe(self, "payload")
       super.postStop()
       println(s"Listener ShutDown - ${name}, path - ${self.path}")
@@ -101,36 +96,23 @@ object Actors {
   //
   // Statistics
   // //////////////////////////////////
-  val statisticsRouter: ActorRef = system //
-    .actorOf(Props(classOf[Statistics], "statistics") //
-      .withDispatcher("akka.statistics.pinned-dispatcher")
-      .withRouter(new RoundRobinPool(statPool)))
+  val statistics: ActorRef = system //
+    .actorOf(Props(classOf[Statistics], "statistics"))
 
   // Server Tick to cause Statistic events
   private val duration = FiniteDuration(statUpdateFreq, TimeUnit.SECONDS)
 
   private val cancellable: akka.actor.Cancellable = //
-    system.scheduler.schedule(duration, duration, statisticsRouter, Tick)
+    system.scheduler.schedule(duration, duration, statistics, Tick)
 
   class Statistics(name: String) extends Actor {
 
     def receive = {
       case Tick => {
-        println("Statistics - tick")
-        val payload = Payload(Json.toJson(Statistics.generate()), "statistics")
+        //       println("Statistics - tick")
+        val stats: StatsData = ImageService.generateStats()
+        val payload = Payload(Json.toJson(stats), "statistics")
         EventBus.publish(MessageEvent("payload", payload))
-      }
-      case img: Image => {
-
-        img.imageUrl.map(url => statisticsRouter ! url)
-        img.mediumUrl.map(url => statisticsRouter ! url)
-        img.thumbUrl.map(url => statisticsRouter ! url)
-      }
-      case url: String => {
-        ImageService.getMongoFile(url).map { file => statisticsRouter ! file }
-      }
-      case m: MongoFile => {
-        Statistics.accumulate(m)
       }
     }
 
@@ -148,23 +130,6 @@ object Actors {
     }
   }
 
-  private object Statistics {
-
-    private var totalBytes: AtomicLong = new AtomicLong(0)
-    private var totalStorage: AtomicLong = new AtomicLong(0)
-    private var totalFiles: AtomicLong = new AtomicLong(0)
-
-    def generate(): StatsData = {
-      StatsData(totalFiles.get, totalBytes.get, totalStorage.get)
-    }
-
-    def accumulate(m: MongoFile) = {
-      totalFiles.addAndGet(1)
-      totalBytes.addAndGet(m.getLength)
-      totalStorage.addAndGet(m.getStorageLength)
-    }
-  }
-
   //
   // Image Loader - ephemeral
   // /////////////////////////////
@@ -178,7 +143,7 @@ object Actors {
 
         list.foreach { obj =>
           val current: Image = obj // implicit conversion of - Image.fromMongoDB(obj)
-          statisticsRouter ! current
+          println(s"Image : $current")
 
           val currentUI: Try[UiImage] = current // implicit conversion with DB access
           currentUI.map { ui =>
@@ -186,10 +151,10 @@ object Actors {
           }
         }
 
+        println(s"Loader Shutting Down - ${name}, reporting to ${listener.path}")
         self ! PoisonPill
       }
     }
-
   }
 
   //
@@ -197,7 +162,7 @@ object Actors {
   // ////////////////////////////////
   def thumbnailers: ActorRef = system //
     .actorOf(Props(classOf[Thumbnailer], "thumbnailers") //
-      .withDispatcher("akka.thumbnails.pinned-dispatcher")
+      .withDispatcher("akka.thumbnailers.pinned-dispatcher")
       .withRouter(new RoundRobinPool(thumbPool)))
 
   class Thumbnailer(name: String) extends Actor {
@@ -205,8 +170,12 @@ object Actors {
     def receive = {
 
       case CreateImage(file) => {
-        ImageService.insert(file)
-        thumbnailers ! ThumbnailRequest(file, mediumSide)
+        for {
+          id <- ImageService.insert(file)
+          image = ImageService.find(id.toString())
+        } yield {
+          thumbnailers ! ThumbnailRequest(file, mediumSide)
+        }
       }
 
       case ThumbnailRequest(file, side) => {
@@ -222,7 +191,6 @@ object Actors {
 
       case UpdateImage(file, url, side) =>
         {
-
           determineUpdate(side)(file.getId(), url)
 
           if (side == mediumSide) {
@@ -234,8 +202,6 @@ object Actors {
               val currentUI: Try[UiImage] = img // implicit conversion with DB access
               currentUI.map { image =>
                 val payload = Payload(Json.toJson(image), "image")
-                //              println(s"Publishing Event - ${payload}")
-                statisticsRouter ! img
                 EventBus.publish(MessageEvent("payload", payload))
               }
 

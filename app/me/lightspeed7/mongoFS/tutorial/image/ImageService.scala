@@ -2,28 +2,31 @@ package me.lightspeed7.mongoFS.tutorial.image
 
 import java.io.{ FileNotFoundException, InputStream }
 import java.util.Date
-
 import scala.util.{ Failure, Success, Try }
-
 import org.bson.types.ObjectId
 import org.mongodb.MongoDatabase
 import org.slf4j.LoggerFactory
-
 import com.mongodb.{ BasicDBObject, DBCollection, MongoClient, MongoClientURI, ReadPreference, WriteConcern }
-
 import me.lightspeed7.mongoFS.tutorial.image.Image.fromMongoDB
 import me.lightspeed7.mongofs.{ MongoFile, MongoFileConstants, MongoFileStore, MongoFileStoreConfig, MongoFileWriter }
 import me.lightspeed7.mongofs.crypto.BasicCrypto
 import me.lightspeed7.mongofs.url.MongoFileUrl
 import me.lightspeed7.mongofs.util.ChunkSize
+import akka.pattern.CircuitBreaker
+import scala.concurrent.Future
+import me.lightspeed7.mongoFS.tutorial.TimeoutFuture
+import com.mongodb.DBObject
+import akka.actor.ActorSystem
+import java.util.ArrayList
 
 object ImageService {
 
   val baseName = "images"
 
   private lazy val db: MongoDatabase = init()
-  private lazy val imageFS: MongoFileStore = buildStore(baseName, ChunkSize.medium_128K)
+  private lazy val imageFS: MongoFileStore = buildStore(baseName, ChunkSize.large_1M)
   private lazy val images: DBCollection = buildCollection(baseName)
+  private lazy val filesColl: DBCollection = buildFilesCollection(baseName)
 
   var hostUrl: String = _
 
@@ -59,17 +62,49 @@ object ImageService {
       .getOrElse(Failure(new IllegalArgumentException("Invalid image size requested")))
   }
 
-  def inputStreamForURL(uuid: String, size: String): Try[(Long, String, InputStream)] = {
-    for {
-      image <- find(uuid)
-      url <- determineSizeUrl(size, image)
-      file <- getMongoFile(url)
-    } yield {
-      (file.getLength, file.getContentType, file.getInputStream)
+  def inputStreamForURL(uuid: String, size: String)(implicit system: ActorSystem): Future[(Long, String, InputStream)] = {
+    import scala.concurrent.duration._
+
+    println(s"inputStreamForURL for ${uuid}")
+
+    TimeoutFuture(5 seconds) {
+      val f = for {
+        image <- find(uuid)
+        url <- determineSizeUrl(size, image)
+        file <- getMongoFile(url)
+      } yield {
+        (file.getLength, file.getContentType, file.getInputStream)
+      }
+
+      f.getOrElse(throw new FileNotFoundException("Unknown uuid : " + uuid))
     }
   }
 
-  def list(orderBy: BasicDBObject) = {
+  def generateStats(): StatsData = {
+    var pipeline = new ArrayList[DBObject]()
+    pipeline.add(new BasicDBObject("$project", new BasicDBObject("_id", 1).append("length", 1).append("storage", 1)))
+
+    val group = new BasicDBObject("_id", 1) //
+      .append("count", new BasicDBObject("$sum", 1))
+      .append("length", new BasicDBObject("$sum", "$length"))
+      .append("storage", new BasicDBObject("$sum", "$storage"))
+    pipeline.add(new BasicDBObject("$group", group))
+
+    val result = filesColl.aggregate(pipeline)
+
+    val iter = result.results().iterator()
+    if (iter.hasNext()) {
+      val cur = iter.next()
+      val count = cur.get("count").asInstanceOf[Integer]
+      val length = cur.get("length").asInstanceOf[Long]
+      val storage = cur.get("storage").asInstanceOf[Long]
+      StatsData(count.longValue(), length, storage)
+    } else {
+      StatsData(0, 0, 0)
+    }
+  }
+
+  def list(orderBy: DBObject) = {
     val f = images.find().sort(orderBy)
     f.iterator()
   }
@@ -153,6 +188,13 @@ object ImageService {
 
   private[image] def buildCollection(bucketName: String): DBCollection = {
     val coll = db.getSurrogate.getCollection(baseName)
+    coll.setReadPreference(ReadPreference.primaryPreferred())
+    coll.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+    coll
+  }
+
+  private[image] def buildFilesCollection(bucketName: String): DBCollection = {
+    val coll = db.getSurrogate.getCollection(baseName + ".files")
     coll.setReadPreference(ReadPreference.primaryPreferred())
     coll.setWriteConcern(WriteConcern.ACKNOWLEDGED);
     coll

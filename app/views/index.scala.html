@@ -1,94 +1,15 @@
-@(uuid: String) @layout(title = "Tutorial", appName = "tutorial") {
+@(uuid: String) @layout(title = "Home", appName = "home") {
+
 
 <section>
-	<div class="row" data-ng-controller="ImageController"
-		data-ng-init="startSocket('@uuid')">
-		<div
-			class="col-xs-12 col-sm-10 col-sm-offset-1 col-md-offset-1 col-lg-offset-1">
-			<div>
-				<div class="pull-right">{{serverTime}}</div>
-				<h3>Image Gallery Upload Tutorial</h3>
-			</div>
-
-			<div class="border container fill">
-				<div class="panel-body" id="aboutme">
-					<div class="pull-left col-xs-12 col-sm-9 border"  >
-						<h4>Gallery</h4>
-						<script type="text/ng-template" id="myModalContent.html">
-					        <div class="modal-header">
-            					<h3 class="modal-title pull-right">{{image.description}}</h3>
-					        </div>
-					        <div class="modal-body container">
-								<div class="col-xs-9" >
-									<img class="col-xs-12 img-responsive medium" 
-                                        src="/images/medium/{{image.id}}" 
-										alt="{{image.tooltip}}" title="{{image.description}}" />
-								</div>
-								<div class="col-xs-3">
-									<strong>Size</strong><br/>
-									<p class="panel-warning text-right padded" >{{image.size | number : 0 }} K</p>
-									<strong>Storage</strong><br/>
-									<p class="panel-warning text-right padded" >{{image.storage | number : 0 }} K</p>
-									<strong>Ratio</strong><br/>
-									<p class="panel-warning text-right padded" >{{image.storage / image.size * 100 | number : 2 }} %</p>
-									<strong>Format</strong><br/>
-									<p class="panel-warning text-right padded" >{{image.format}}</p>
-									<strong>Content Type</strong><br/>
-									<p class="panel-warning text-right padded" >{{image.contentType}}</p>
-								</div>
-        					</div>
-        					<div class="modal-footer col-xs-12">
-							   <a class="btn btn-primary pull-left" target="_self" href="/images/image/{{image.id}}" download="{{image.fileName}}">Download</a>
-	 				           <button class="btn btn-warning" ng-click="cancel()">Close</button>
-        					</div>
-    					</script>
-
-						<div data-ng-repeat="image in images" class="col-xs-2 ">
-							{{image.description}}<br /> <img class="img-thumbnail " height="150"
-								width="150" src="/images/thumb/{{image.id}}" alt="{{image.tooltip}}"
-								title="{{image.description}}" ng-click="open('lg', image)"/>
-						</div>
-
-
-					</div>
-					<div class="col-xs-12 col-sm-3 border">
-						<h4>Metrics</h4>
-						<strong>File Count</strong><br/>
-						<p class="panel-warning text-right padded" >{{fileCount | number : 0 }} files</p>
-						<strong>Size</strong><br/>
-						<p class="panel-warning text-right padded" >{{imageBytes | number : 1 }} MB</p>
-						<strong>Storage</strong><br/>
-						<p class="panel-warning text-right padded" >{{storageBytes | number : 1 }} MB</p>
-						<strong>Ratio</strong><br/>
-						<p class="panel-warning text-right padded" >{{storageBytes / imageBytes * 100 | number : 2 }} %</p>
-
-						<hr />
-
-						<div ng-controller="FileUpload">
-
-							<div ng-file-drop ng-model="myFiles" class="drop-box"
-								drag-over-class="{accept:'dragover', reject:'dragover-err', delay:100}"
-								ng-multiple="true" allow-dir="true" accept="image/*,*pdf"
-								ng-file-change="upload(files)">Drop Images here</div>
-						</div>
-
-					</div>
-				</div>
-			</div>
+	<div class="row panel panel-default" >
+		<div class="col-xs-1" >&nbsp;</div>
+		<div class="col-xs-10" >
+			<h2><a href="/images" >Images App</a></h2>
+			<h2><a href="/files" >Files App</a></h2>
 		</div>
 	</div>
-
-	</div>
 </section>
-
-<script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular-file-upload-shim.min.js"))"></script>
-<script src="@routes.WebJarAssets.at(WebJarAssets.locate("angular-file-upload.min.js"))"></script>
-<script src="@routes.WebJarAssets.at(WebJarAssets.locate("ui-bootstrap.min.js"))"></script>
-<script src="@routes.WebJarAssets.at(WebJarAssets.locate("ui-bootstrap-tpls.min.js"))"></script>
-
-<script src="@routes.Assets.at("javascripts/app.js")"></script>
-<script src="@routes.Assets.at("javascripts/controllers.js")"></script>
-
 
 }
 

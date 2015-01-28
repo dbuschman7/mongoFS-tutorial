@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+
+<title>Reactive</title>
+
+<meta name="description" content="Reactive in a non-reactive world">
+<meta name="author" content="David Buschman">
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+<link rel="stylesheet" href="/assets/reveal3/css/reveal.css">
+<link rel="stylesheet" href="/assets/reveal3/css/theme/moon.css" id="theme">
+
+<!-- Code syntax highlighting -->
+<link rel="stylesheet" href="/assets/reveal3/lib/css/zenburn.css">
+
+<!-- Printing and PDF exports -->
+<script>
+	var link = document.createElement('link');
+	link.rel = 'stylesheet';
+	link.type = 'text/css';
+	link.href = window.location.search.match(/print-pdf/gi) ? '/assets/reveal3/css/print/pdf.css'
+			: '/assets/reveal3/css/print/paper.css';
+	document.getElementsByTagName('head')[0].appendChild(link);
+</script>
+
+<!--[if lt IE 9]>
+		<script src="/assets/reveal3/lib/js/html5shiv.js"></script>
+		<![endif]-->
+</head>
+
+<body>
+
+	<div class="reveal">
+
+		<!-- Any section element inside of this container is displayed as a slide -->
+		<div class="slides">
+			<section>
+				<h3>&nbsp;</h3>
+				<h2>Reactive in a non-reactive world</h2>
+				<h3>&nbsp;</h3>
+				<h3>Denver Reactive / Scala User Group</h3>
+				<p>David Buschman</p>
+				<p>January 28th, 2015</p>
+				<p>Github - dbuschman7</p>
+				<p>&nbsp;</p>
+				<p>https://github.com/dbuschman7/mongoFS-tutorial</p>
+			</section>
+
+			<section id="fragments">
+				<h2>Presentation Outline</h2>
+				<p>&nbsp;</p>
+				<ul>
+					<li class="fragment ">The way it was. ( or still is for some)</li>
+					<li class="fragment ">Why change?</li>
+					<li class="fragment ">Legacy libraries</li>
+					<li class="fragment ">Reactive Manifesto</li>
+					<li class="fragment ">Asynchronous Tools</li>
+					<li class="fragment ">Demo Time!</li>
+				</ul>
+			</section>
+
+			<!-- *********************************** -->
+			<!-- **** Summary and Motivation    **** -->
+			<!-- *********************************** -->
+			<section>
+				<section>
+					<h2>The way it was ( or is for some)</h2>
+					<ul>
+						<li class="fragment ">Request -> Response every where<br>
+							<ul>
+								<li class="fragment ">HTML -- GET, PUT, POST, DELETE, ...</li>
+								<li class="fragment ">Functions -- call with params, return result</li>
+								<li class="fragment ">Programs -- give input, get output</li>
+								<li class="fragment ">CLI -- give command, get results</li>
+							</ul>
+						</li>
+						<li class="fragment ">Imperative - Humans in control, coded how to</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Why change?</h2>
+					<img class="fragment" src="/assets/images/IE_Murder.png" alt="breaker">
+				</section>
+				<section>
+					<h2>Why change?</h2>
+					<ul>
+						<li class="fragment ">Multi-core processors</li>
+						<li class="fragment ">Performance - context switching</li>
+						<li class="fragment ">Hardware virtualization and container-ization</li>
+						<li class="fragment ">Not the only process running on a 'machine'</li>
+						<li class="fragment ">Since the game has changed so much, <br>
+						&nbsp;&nbsp;&nbsp;&nbsp;it forces some new questions to be asked</li>
+					</ul>
+				</section>
+				<section>
+					<h2>What does 100% CPU mean ?</h2>
+					<ul>
+						<li class="fragment ">A process has run away, out of control</li>
+						<li class="fragment ">IT / DevOps needs to get involved</li>
+						<li class="fragment ">Kill and restart the 'bad' process.</li>
+						<li class="fragment ">Other processes are negatively affective</li>
+					</ul>
+					<h2 class="fragment">
+						<br> <br>But why is the ok ?!?
+					</h2>
+				</section>
+				<section>
+					<h2>What needs to change?</h2>
+					<ul>
+						<li class="fragment ">Declarative versus Imperative Programming</li>
+						<li class="fragment ">Program what to do and not how to do it</li>
+						<li class="fragment ">Let the CPU do things its way</li>
+						<li class="fragment ">Always give up our context when we have to wait</li>
+						<li class="fragment ">Let things fail, then recover and move on</li>	
+					</ul>
+				</section>
+			</section>
+
+
+			<!-- *********************************** -->
+			<!-- **** Lookup and stream a file  **** -->
+			<!-- *********************************** -->
+			<section>
+				<section>
+					<h2>Existing Synchronous Libraries</h2>
+					<ul>
+						<li class="fragment">Lookup a file and stream it to a browser from MongoDB</li>
+						<li class="fragment ">mongoFS - 0.9.2</li>
+						<li class="fragment ">Adds compression, encryption, and zip archive expansion</li>
+						<li class="fragment ">mongo-java-driver - 2.12.4</li>
+						<li class="fragment ">Synchronous library calls</li>
+						<li class="fragment ">Uses InputStream - blocking IO</li>
+					</ul>
+				</section>
+			</section>
+
+			<!-- *********************************** -->
+			<!-- **** Reactive Manifesto        **** -->
+			<!-- *********************************** -->
+			<section>
+				<section>
+					<h2>Reactive Manifesto</h2>
+					<ul>
+						<li class="fragment ">Version 2.0, September 2014</li>
+						<li class="fragment ">http://reactivemanifesto.org<br>&nbsp;
+						</li>
+
+						<li class="fragment ">Responsive - respond in a timely manner</li>
+						<li class="fragment ">Resilient - handle failure and continue</li>
+						<li class="fragment ">Elastic (Scalable) - stay responsive under load</li>
+						<li class="fragment ">Message-Driven (Events) - message(data) <br>&nbsp;&nbsp;&nbsp;&nbsp; passed between
+							components
+						</li>
+					</ul>
+				</section>
+			</section>
+
+			<!-- *********************************** -->
+			<!-- **** Reference and Objects     **** -->
+			<!-- *********************************** -->
+			<section>
+
+				<section>
+					<h2>Asynchronous Tools</h2>
+					<ul>
+						<li class="fragment ">ExecutorService ( thread pools )</li>
+						<li class="fragment ">Futures and Promises - for single results</li>
+						<li class="fragment ">Iteratees - Non-blocking, push-based stream data</li>
+						<li class="fragment ">Actors - message driven components - AKKA</li>
+						<li class="fragment ">Circuit Breakers - resource failure protection</li>
+						<li class="fragment ">Reactive Streams - push and pull driven stream data</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Futures and Promises</h2>
+					<ul>
+						<li class="fragment ">What is a Future?</li>
+						<li class="fragment ">Only a commitment to execute something asynchronously</li>
+						<li class="fragment ">Not guaranteed to complete</li>
+						<li class="fragment ">We provide a callback for the result</li>
+						<li class="fragment ">Does a Future block internally, waiting for a result?</li>
+						<li class="fragment ">Promise - completes a future</li>
+					</ul>
+					<code class="fragment scala">
+						<pre>def fob: Future[Option[Boolean]] = {
+    val promiseToTimeout = Promise.timeout(None, 1 seconds)
+    val doSomething = Future {
+      // do something
+      Some(true)
+    }
+    Future.firstCompletedOf(List(doSomething, promiseToTimeout))
+}</pre>
+					</code>
+				</section>
+				<section>
+					<h2>Iteratees</h2>
+					<ul>
+						<li class="fragment ">Non-blocking stream consumer</li>
+						<li class="fragment ">It is a push data model</li>
+						<li class="fragment ">Made popular in the Play! Framework</li>
+						<li class="fragment ">Companion producer is the Enumerator</li>
+						<li class="fragment ">Both require an ExecutionContext</li>
+						<li class="fragment ">Backed by Futures and Promises</li>
+						<li class="fragment ">Will be replaced by Reactive Streams</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Iteratees - Enumerator ( Producer )</h2>
+					<span class="stretch"> <pre>
+							<code class=" scala">def download(size: String, uuid: String) = Action.async { request =>
+    Future {
+      val input: Try[(Long, String, InputStream)] = 
+      		ImageService.inputStreamForURL(uuid, size)
+      		
+      input match {
+        case Success((length, media, is)) =>
+          Result(
+            header = ResponseHeader(200, 
+                  Map(CONTENT_LENGTH -> length.toString, 
+                      CONTENT_TYPE -> media)),
+            body = Enumerator.fromStream(is))
+        case Failure(f) => NoContent
+      }
+    }
+  }</code>
+						</pre>
+					</span>
+				</section>
+				<section>
+					<h2>Iteratees - Iteratee ( Consumer )</h2>
+					<span class="stretch"> <pre>
+							<code class=" scala">def handleFilePartToMongo: PartHandler[FilePart[MongoFile]] =
+  parse.Multipart.handleFilePart {
+    case parse.Multipart.FileInfo(partName, filename, contentType) =>
+
+      ImageService.createNew(filename, contentType.get).map { writer =>
+         val out = writer.getOutputStream()
+     
+         Iteratee.fold[Array[Byte], OutputStream](out) { (os, data) =>
+           os.write(data); os
+         }.map { os => os.close(); writer.getMongoFile() }
+    
+     }.getOrElse(null)
+  }</code>
+						</pre>
+					</span>
+				</section>
+				<section>
+					<h2>Akka Actors</h2>
+					<ul>
+						<li class="fragment ">Very lightweight concurrent entities</li>
+						<li class="fragment ">Message Driven</li>
+						<li class="fragment ">Isolate the business logic</li>
+						<li class="fragment ">Creates a critical section</li>
+						<li class="fragment ">Orders delivery of messages</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Akka Actors - Example</h2>
+					<pre>
+						<code class="strech scala">case class Greeting(who: String)
+ 
+class GreetingActor extends Actor with ActorLogging {
+  def receive = {
+    case Greeting(who) ⇒ log.info("Hello " + who)
+  }
+}
+ 
+val system = ActorSystem("MySystem")
+val greeter = system.actorOf(Props[GreetingActor], name = "greeter")
+
+greeter ! Greeting("Charlie Parker")					
+</code>
+					</pre>
+				</section>
+				<section>
+					<h2>Circuit Breakers</h2>
+					<ul>
+						<li class="fragment ">A circuit breaker is used to provide stability and prevent cascading failures in distributed
+							systems. These should be used in conjunction with judicious timeouts at the interfaces between remote systems to prevent
+							the failure of a single component from bringing down all components.</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Circuit Breakers - broken down</h2>
+					<ul>
+						<li class="fragment ">Used in distributed systems</li>
+						<li class="fragment ">Provide stability</li>
+						<li class="fragment ">Prevent cascading failures</li>
+						<li class="fragment ">Judicious timeouts</li>
+						<li class="fragment ">Interfaces between remote systems</li>
+						<li class="fragment ">Prevent bringing down all components</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Circuit Breakers - State Machine</h2>
+					<img class="stretch" style="background: #ddd" src="/assets/images/circuit-breaker-states.png" alt="breaker">
+				</section>
+				<section>
+					<h2>Circuit Breakers - Example</h2>
+
+					<pre class="stretch">
+						<code class=" scala">trait MongoCircuitBreaker {
+
+  lazy val breaker =
+    new CircuitBreaker(Akka.system.scheduler, maxFailures = 3, //
+      		callTimeout = 5.seconds, resetTimeout = 10.seconds) //
+      .onOpen(notifyMeOnOpen)
+      .onClose(notifyMeOnClose)
+
+  def notifyMeOnOpen(): Unit =
+    Logger.warn("CircuitBreaker is now open, attempt reset in 10 seconds")
+
+  def notifyMeOnClose(): Unit =
+    Logger.warn("CircuitBreaker is now closed")
+
+}					
+</code>
+					</pre>
+
+				</section>
+<section>
+					<h2>Circuit Breakers - Example</h2>
+<pre class="stretch"><code class=" scala">  def download(size: String, uuid: String) = Action.async { request =>
+
+    breaker.withCircuitBreaker({
+      println(s"Download - $size => $uuid")
+      val future: Future[(Long, String, InputStream)] = 
+           ImageService.inputStreamForURL(uuid, size)
+      future.map { data =>
+        Result(body = Enumerator.fromStream(data._3),
+          header = ResponseHeader(200, Map(CONTENT_LENGTH -> data._1.toString, 
+                                           CONTENT_TYPE -> data._2)))
+      }
+    })
+  }				
+</code></pre>
+
+				</section>
+			</section>
+
+
+
+			<!-- *********************************** -->
+			<!-- **** Demo Time                 **** -->
+			<!-- *********************************** -->
+			<section>
+				<h2>Demo Time!</h2>
+				<ul>
+					<li>https://github.com/dbuschman7/mongoFS-tutorial</li>
+					<li>Play - 2.3.7</li>
+					<li>Scala - 2.11.1</li>
+					<li>AngularJS - 1.2.23</li>
+					<li>Bootstrap - 3.2.0</li>
+					<li>mongo-java-driver - 2.12.4</li>
+					<li>mongod server - 2.6.1</li>
+					<li>mongoFS - 0.9.2</li>
+					<li>Akka - 2.3.4</li>
+					<li>2 apps - Images and Files</li>
+					<li>Ready, Set, <a href="/images" target="_new">Go!</a>
+				</ul>
+			</section>
+
+
+		</div>
+	</div>
+
+	<script src="/assets/reveal3/lib/js/head.min.js"></script>
+	<script src="/assets/reveal3/js/reveal.js"></script>
+
+	<script>
+		// Full list of configuration options available at:
+		// https://github.com/hakimel/reveal.js#configuration
+		Reveal.initialize({
+			controls : true,
+			progress : true,
+			history : true,
+			center : true,
+
+			transition : 'slide', // none/fade/slide/convex/concave/zoom
+
+			// Optional reveal.js plugins
+			dependencies : [ {
+				src : '/assets/reveal3/lib/js/classList.js',
+				condition : function() {
+					return !document.body.classList;
+				}
+			}, {
+				src : '/assets/reveal3/plugin/markdown/marked.js',
+				condition : function() {
+					return !!document.querySelector('[data-markdown]');
+				}
+			}, {
+				src : '/assets/reveal3/plugin/markdown/markdown.js',
+				condition : function() {
+					return !!document.querySelector('[data-markdown]');
+				}
+			}, {
+				src : '/assets/reveal3/plugin/highlight/highlight.js',
+				async : true,
+				condition : function() {
+					return !!document.querySelector('pre code');
+				},
+				callback : function() {
+					hljs.initHighlightingOnLoad();
+				}
+			}, {
+				src : '/assets/reveal3/plugin/zoom-js/zoom.js',
+				async : true
+			}, {
+				src : '/assets/reveal3/plugin/notes/notes.js',
+				async : true
+			} ]
+		});
+	</script>
+
+</body>
+</html>

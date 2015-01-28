@@ -8,7 +8,7 @@ GET   /files				 controllers.Application.files
 
 # Images App urls 
 GET   /images/sse/:uuid      controllers.ImageFS.sse(uuid:String)
-PUT   /image/upload          controllers.ImageFS.upload()
+PUT   /images/upload         controllers.ImageFS.upload()
 GET   /images/image/:uuid    controllers.ImageFS.download(size:String = "image", uuid:String)
 GET   /images/medium/:uuid   controllers.ImageFS.download(size:String = "medium", uuid:String)
 GET   /images/thumb/:uuid    controllers.ImageFS.download(size:String = "thumb", uuid:String)
